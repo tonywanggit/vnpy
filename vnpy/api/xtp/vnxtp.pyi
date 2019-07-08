@@ -7,11 +7,12 @@ if typing.TYPE_CHECKING:
     from .vnxtp import *
 
 
-def set_async_callback_exception_handler(handler: Callable[[Exception, object, str], bool]):
+def set_async_callback_exception_handler(handler: Callable[[AsyncDispatchException], None]):
     """
     set a customize exception handler for async callback in this module(pyd)
     \a handler should return True if it handles that exception,
-    If the return value of \a handler is not True, exception will be re-thrown.
+
+    :note: If the return value of \a handler is not True, exception will be re-thrown.
     """
     ...
 
@@ -155,8 +156,8 @@ class XTPTickByTickEntrust():
     seq: int
     price: float
     qty: int
-    side: int
-    ord_type: int
+    side: str
+    ord_type: str
     
     
 class XTPTickByTickTrade():
@@ -169,7 +170,7 @@ class XTPTickByTickTrade():
     money: float
     bid_no: int
     ask_no: int
-    trade_flag: int
+    trade_flag: str
     
     
 class XTPTickByTickStruct():
@@ -245,7 +246,7 @@ class XTPOrderInfo():
     order_local_id: str
     order_status: XTP_ORDER_STATUS_TYPE
     order_submit_status: XTP_ORDER_SUBMIT_STATUS_TYPE
-    order_type: int
+    order_type: str
     
     
 class XTPTradeReport():
@@ -263,7 +264,7 @@ class XTPTradeReport():
     trade_amount: float
     report_index: int
     order_exch_id: str
-    trade_type: int
+    trade_type: str
     u32: int
     side: int
     position_effect: int
@@ -320,6 +321,7 @@ class XTPQueryAssetRsp():
     captial_asset: float
     force_freeze_amount: float
     preferred_amount: float
+    repay_stock_aval_banlance: float
     unknown: List[int]
     
     
@@ -494,6 +496,124 @@ class XTPQueryOptionAuctionInfoRsp():
     unknown: List[int]
     
     
+class XTPCrdCashRepayRsp():
+    
+    
+    xtp_id: int
+    request_amount: float
+    cash_repay_amount: float
+    
+    
+class XTPCrdCashRepayDebtInterestFeeRsp():
+    
+    
+    xtp_id: int
+    request_amount: float
+    cash_repay_amount: float
+    debt_compact_id: str
+    unknow: str
+    
+    
+class XTPCrdCashRepayInfo():
+    
+    
+    xtp_id: int
+    status: XTP_CRD_CR_STATUS
+    request_amount: float
+    cash_repay_amount: float
+    position_effect: int
+    error_info: XTPRspInfoStruct
+    
+    
+class XTPCrdDebtInfo():
+    
+    
+    debt_type: int
+    debt_id: str
+    position_id: int
+    order_xtp_id: int
+    debt_status: int
+    market: XTP_MARKET_TYPE
+    ticker: str
+    order_date: int
+    end_date: int
+    orig_end_date: int
+    is_extended: bool
+    remain_amt: float
+    remain_qty: int
+    remain_principal: float
+    due_right_qty: int
+    unknown: List[int]
+    
+    
+class XTPCrdFundInfo():
+    
+    
+    maintenance_ratio: float
+    all_asset: float
+    all_debt: float
+    line_of_credit: float
+    guaranty: float
+    position_amount: float
+    
+    
+class XTPClientQueryCrdDebtStockReq():
+    
+    
+    market: XTP_MARKET_TYPE
+    ticker: str
+    
+    
+class XTPCrdDebtStockInfo():
+    
+    
+    market: XTP_MARKET_TYPE
+    ticker: str
+    remain_quantity: int
+    order_withhold_quantity: int
+    
+    
+class XTPClientQueryCrdPositionStockReq():
+    
+    
+    market: XTP_MARKET_TYPE
+    ticker: str
+    
+    
+class XTPClientQueryCrdPositionStkInfo():
+    
+    
+    market: XTP_MARKET_TYPE
+    ticker: str
+    limit_qty: int
+    yesterday_qty: int
+    left_qty: int
+    frozen_qty: int
+    
+    
+class XTPClientQueryCrdSurplusStkReqInfo():
+    
+    
+    market: XTP_MARKET_TYPE
+    ticker: str
+    
+    
+class XTPClientQueryCrdSurplusStkRspInfo():
+    
+    
+    market: XTP_MARKET_TYPE
+    ticker: str
+    transferable_quantity: int
+    transferred_quantity: int
+    
+    
+class XTPClientCrdExtendDebtInfo():
+    
+    
+    xtp_id: int
+    debt_id: str
+    
+    
 class XTPFundTransferReq():
     
     
@@ -596,6 +716,8 @@ class XTP_ACCOUNT_TYPE(Enum):
 class XTP_FUND_TRANSFER_TYPE(Enum):
     XTP_FUND_TRANSFER_OUT: XTP_FUND_TRANSFER_TYPE
     XTP_FUND_TRANSFER_IN: XTP_FUND_TRANSFER_TYPE
+    XTP_FUND_INTER_TRANSFER_OUT: XTP_FUND_TRANSFER_TYPE
+    XTP_FUND_INTER_TRANSFER_IN: XTP_FUND_TRANSFER_TYPE
     XTP_FUND_TRANSFER_UNKNOWN: XTP_FUND_TRANSFER_TYPE
 class XTP_FUND_OPER_STATUS(Enum):
     XTP_FUND_OPER_PROCESSING: XTP_FUND_OPER_STATUS
@@ -622,6 +744,10 @@ class XTP_POSITION_DIRECTION_TYPE(Enum):
     XTP_POSITION_DIRECTION_LONG: XTP_POSITION_DIRECTION_TYPE
     XTP_POSITION_DIRECTION_SHORT: XTP_POSITION_DIRECTION_TYPE
     XTP_POSITION_DIRECTION_COVERED: XTP_POSITION_DIRECTION_TYPE
+class XTP_CRD_CR_STATUS(Enum):
+    XTP_CRD_CR_INIT: XTP_CRD_CR_STATUS
+    XTP_CRD_CR_SUCCESS: XTP_CRD_CR_STATUS
+    XTP_CRD_CR_FAILED: XTP_CRD_CR_STATUS
 class XTP_MARKETDATA_TYPE(Enum):
     XTP_MARKETDATA_ACTUAL: XTP_MARKETDATA_TYPE
     XTP_MARKETDATA_OPTION: XTP_MARKETDATA_TYPE
@@ -648,8 +774,9 @@ XTP_TBT_TYPE = XTP_TBT_TYPE
 XTP_OPT_CALL_OR_PUT_TYPE = XTP_OPT_CALL_OR_PUT_TYPE
 XTP_OPT_EXERCISE_TYPE_TYPE = XTP_OPT_EXERCISE_TYPE_TYPE
 XTP_POSITION_DIRECTION_TYPE = XTP_POSITION_DIRECTION_TYPE
-TXTPTradeTypeType = int
-TXTPOrderTypeType = int
+XTP_CRD_CR_STATUS = XTP_CRD_CR_STATUS
+TXTPTradeTypeType = str
+TXTPOrderTypeType = str
 XTPRI = XTPRspInfoStruct
 XTPST = XTPSpecificTickerStruct
 XTPMD = XTPMarketDataStruct
@@ -662,6 +789,15 @@ XTPQueryTradeRsp = XTPTradeReport
 XTPFundTransferLog = XTPFundTransferNotice
 XTPQueryETFBaseRsp = XTPQueryETFBaseRsp
 XTPQueryETFComponentReq = XTPQueryETFComponentReq
+XTPCrdDebtInfo = XTPCrdDebtInfo
+XTPCrdFundInfo = XTPCrdFundInfo
+XTPClientQueryCrdDebtStockReq = XTPClientQueryCrdDebtStockReq
+XTPCrdDebtStockInfo = XTPCrdDebtStockInfo
+XTPClientQueryCrdPositionStockReq = XTPClientQueryCrdPositionStockReq
+XTPClientQueryCrdPositionStkInfo = XTPClientQueryCrdPositionStkInfo
+XTPClientQueryCrdSurplusStkReqInfo = XTPClientQueryCrdSurplusStkReqInfo
+XTPClientQueryCrdSurplusStkRspInfo = XTPClientQueryCrdSurplusStkRspInfo
+XTPClientCrdExtendDebtInfo = XTPClientCrdExtendDebtInfo
 XTPFundTransferAck = XTPFundTransferNotice
 XTP_VERSION_LEN: int
 XTP_TRADING_DAY_LEN: int
@@ -672,6 +808,7 @@ XTP_ORDER_EXCH_LEN: int
 XTP_EXEC_ID_LEN: int
 XTP_BRANCH_PBU_LEN: int
 XTP_ACCOUNT_NAME_LEN: int
+XTP_CREDIT_DEBT_ID_LEN: int
 XTP_SIDE_BUY: int
 XTP_SIDE_SELL: int
 XTP_SIDE_PURCHASE: int
@@ -684,8 +821,10 @@ XTP_SIDE_MARGIN_TRADE: int
 XTP_SIDE_SHORT_SELL: int
 XTP_SIDE_REPAY_MARGIN: int
 XTP_SIDE_REPAY_STOCK: int
-XTP_SIDE_CASH_REPAY_MARGIN: int
 XTP_SIDE_STOCK_REPAY_STOCK: int
+XTP_SIDE_SURSTK_TRANS: int
+XTP_SIDE_GRTSTK_TRANSIN: int
+XTP_SIDE_GRTSTK_TRANSOUT: int
 XTP_SIDE_UNKNOWN: int
 XTP_POSITION_EFFECT_INIT: int
 XTP_POSITION_EFFECT_OPEN: int
@@ -695,16 +834,21 @@ XTP_POSITION_EFFECT_CLOSETODAY: int
 XTP_POSITION_EFFECT_CLOSEYESTERDAY: int
 XTP_POSITION_EFFECT_FORCEOFF: int
 XTP_POSITION_EFFECT_LOCALFORCECLOSE: int
+XTP_POSITION_EFFECT_CREDIT_FORCE_COVER: int
+XTP_POSITION_EFFECT_CREDIT_FORCE_CLEAR: int
+XTP_POSITION_EFFECT_CREDIT_FORCE_DEBT: int
+XTP_POSITION_EFFECT_CREDIT_FORCE_UNCOND: int
 XTP_POSITION_EFFECT_UNKNOWN: int
-XTP_TRDT_COMMON: int
-XTP_TRDT_CASH: int
-XTP_TRDT_PRIMARY: int
-XTP_ORDT_Normal: int
-XTP_ORDT_DeriveFromQuote: int
-XTP_ORDT_DeriveFromCombination: int
-XTP_ORDT_Combination: int
-XTP_ORDT_ConditionalOrder: int
-XTP_ORDT_Swap: int
+XTP_TRDT_COMMON: str
+XTP_TRDT_CASH: str
+XTP_TRDT_PRIMARY: str
+XTP_TRDT_CROSS_MKT_CASH: str
+XTP_ORDT_Normal: str
+XTP_ORDT_DeriveFromQuote: str
+XTP_ORDT_DeriveFromCombination: str
+XTP_ORDT_Combination: str
+XTP_ORDT_ConditionalOrder: str
+XTP_ORDT_Swap: str
 XTP_ERR_MSG_LEN: int
 XTP_ACCOUNT_PASSWORD_LEN: int
 
