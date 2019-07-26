@@ -12,10 +12,10 @@ from vnpy.app.cta_strategy.strategies.atr_rsi_strategy import (
 
 engine = BacktestingEngine()
 engine.set_parameters(
-    vt_symbol="IF88.CFFEX",
+    vt_symbol="rb1910.SHFE",
     interval="1m",
-    start=datetime(2019, 1, 1),
-    end=datetime(2019, 6, 20),
+    start=datetime(2010, 1, 1),
+    end=datetime(2019, 7, 17),
     rate=0.3 / 10000,
     slippage=0.2,
     size=300,
