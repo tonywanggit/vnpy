@@ -3,12 +3,13 @@
 
 import logging
 import smtplib
+import os
 from abc import ABC
 from datetime import datetime
 from email.message import EmailMessage
 from queue import Empty, Queue
 from threading import Thread
-from typing import Any, Sequence
+from typing import Any, Sequence, Type
 
 from vnpy.event import Event, EventEngine
 from .app import BaseApp
@@ -30,7 +31,7 @@ from .object import (
     HistoryRequest
 )
 from .setting import SETTINGS
-from .utility import get_folder_path
+from .utility import get_folder_path, TRADER_DIR
 
 
 class MainEngine:
@@ -51,7 +52,8 @@ class MainEngine:
         self.apps = {}
         self.exchanges = []
 
-        self.init_engines()
+        os.chdir(TRADER_DIR)    # Change working directory
+        self.init_engines()     # Initialize function engines
 
     def add_engine(self, engine_class: Any):
         """
@@ -61,7 +63,7 @@ class MainEngine:
         self.engines[engine.engine_name] = engine
         return engine
 
-    def add_gateway(self, gateway_class: BaseGateway):
+    def add_gateway(self, gateway_class: Type[BaseGateway]):
         """
         Add gateway.
         """
@@ -75,7 +77,7 @@ class MainEngine:
 
         return gateway
 
-    def add_app(self, app_class: BaseApp):
+    def add_app(self, app_class: Type[BaseApp]):
         """
         Add app.
         """
@@ -299,7 +301,7 @@ class LogEngine(BaseEngine):
         file_path = log_path.joinpath(filename)
 
         file_handler = logging.FileHandler(
-            file_path, mode="w", encoding="utf8"
+            file_path, mode="a", encoding="utf8"
         )
         file_handler.setLevel(self.level)
         file_handler.setFormatter(self.formatter)
@@ -311,7 +313,7 @@ class LogEngine(BaseEngine):
 
     def process_log_event(self, event: Event):
         """
-        Output log event data with logging function.
+        Process log event.
         """
         log = event.data
         self.logger.log(log.level, log.msg)

@@ -22,6 +22,9 @@ def extract_vt_symbol(vt_symbol: str):
 
 
 def generate_vt_symbol(symbol: str, exchange: Exchange):
+    """
+    return vt_symbol
+    """
     return f"{symbol}.{exchange.value}"
 
 
@@ -177,11 +180,13 @@ class BarGenerator:
                 high_price=tick.last_price,
                 low_price=tick.last_price,
                 close_price=tick.last_price,
+                open_interest=tick.open_interest
             )
         else:
             self.bar.high_price = max(self.bar.high_price, tick.last_price)
             self.bar.low_price = min(self.bar.low_price, tick.last_price)
             self.bar.close_price = tick.last_price
+            self.bar.open_interest = tick.open_interest
             self.bar.datetime = tick.datetime
 
         if self.last_tick:
@@ -221,6 +226,7 @@ class BarGenerator:
         # Update close price/volume into window bar
         self.window_bar.close_price = bar.close_price
         self.window_bar.volume += int(bar.volume)
+        self.window_bar.open_interest = bar.open_interest
 
         # Check if window bar completed
         finished = False
@@ -253,6 +259,9 @@ class BarGenerator:
         """
         Generate the bar data and call callback immediately.
         """
+        self.bar.datetime = self.bar.datetime.replace(
+            second=0, microsecond=0
+        )
         self.on_bar(self.bar)
         self.bar = None
 

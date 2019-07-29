@@ -9,10 +9,12 @@ from ..engine import (
     EVENT_BACKTESTER_OPTIMIZATION_FINISHED,
     OptimizationSetting
 )
-from vnpy.trader.constant import Interval
+from vnpy.trader.constant import Interval, Direction
 from vnpy.trader.engine import MainEngine
 from vnpy.trader.ui import QtCore, QtWidgets, QtGui
+from vnpy.trader.ui.widget import BaseMonitor, BaseCell, DirectionCell, EnumCell
 from vnpy.event import Event, EventEngine
+from vnpy.chart import ChartWidget, CandleItem, VolumeItem
 
 
 class BacktesterManager(QtWidgets.QWidget):
@@ -95,11 +97,31 @@ class BacktesterManager(QtWidgets.QWidget):
         downloading_button = QtWidgets.QPushButton("下载数据")
         downloading_button.clicked.connect(self.start_downloading)
 
+        self.order_button = QtWidgets.QPushButton("委托记录")
+        self.order_button.clicked.connect(self.show_backtesting_orders)
+        self.order_button.setEnabled(False)
+
+        self.trade_button = QtWidgets.QPushButton("成交记录")
+        self.trade_button.clicked.connect(self.show_backtesting_trades)
+        self.trade_button.setEnabled(False)
+
+        self.daily_button = QtWidgets.QPushButton("每日盈亏")
+        self.daily_button.clicked.connect(self.show_daily_results)
+        self.daily_button.setEnabled(False)
+
+        self.candle_button = QtWidgets.QPushButton("K线图表")
+        self.candle_button.clicked.connect(self.show_candle_chart)
+        self.candle_button.setEnabled(False)
+
         for button in [
             backtesting_button,
             optimization_button,
             downloading_button,
-            self.result_button
+            self.result_button,
+            self.order_button,
+            self.trade_button,
+            self.daily_button,
+            self.candle_button
         ]:
             button.setFixedHeight(button.sizeHint().height() * 2)
 
@@ -114,11 +136,16 @@ class BacktesterManager(QtWidgets.QWidget):
         form.addRow("合约乘数", self.size_line)
         form.addRow("价格跳动", self.pricetick_line)
         form.addRow("回测资金", self.capital_line)
-        form.addRow(backtesting_button)
 
         left_vbox = QtWidgets.QVBoxLayout()
         left_vbox.addLayout(form)
+        left_vbox.addWidget(backtesting_button)
         left_vbox.addWidget(downloading_button)
+        left_vbox.addStretch()
+        left_vbox.addWidget(self.trade_button)
+        left_vbox.addWidget(self.order_button)
+        left_vbox.addWidget(self.daily_button)
+        left_vbox.addWidget(self.candle_button)
         left_vbox.addStretch()
         left_vbox.addWidget(optimization_button)
         left_vbox.addWidget(self.result_button)
@@ -131,6 +158,28 @@ class BacktesterManager(QtWidgets.QWidget):
 
         self.chart = BacktesterChart()
         self.chart.setMinimumWidth(1000)
+
+        self.trade_dialog = BacktestingResultDialog(
+            self.main_engine,
+            self.event_engine,
+            "回测成交记录",
+            BacktestingTradeMonitor
+        )
+        self.order_dialog = BacktestingResultDialog(
+            self.main_engine,
+            self.event_engine,
+            "回测委托记录",
+            BacktestingOrderMonitor
+        )
+        self.daily_dialog = BacktestingResultDialog(
+            self.main_engine,
+            self.event_engine,
+            "回测每日盈亏",
+            DailyResultMonitor
+        )
+
+        # Candle Chart
+        self.candle_dialog = CandleChartDialog()
 
         # Layout
         vbox = QtWidgets.QVBoxLayout()
@@ -175,6 +224,11 @@ class BacktesterManager(QtWidgets.QWidget):
 
         df = self.backtester_engine.get_result_df()
         self.chart.set_data(df)
+
+        self.trade_button.setEnabled(True)
+        self.order_button.setEnabled(True)
+        self.daily_button.setEnabled(True)
+        self.candle_button.setEnabled(True)
 
     def process_optimization_finished_event(self, event: Event):
         """"""
@@ -221,6 +275,16 @@ class BacktesterManager(QtWidgets.QWidget):
             self.statistics_monitor.clear_data()
             self.chart.clear_data()
 
+            self.trade_button.setEnabled(False)
+            self.order_button.setEnabled(False)
+            self.daily_button.setEnabled(False)
+            self.candle_button.setEnabled(False)
+
+            self.trade_dialog.clear_data()
+            self.order_dialog.clear_data()
+            self.daily_dialog.clear_data()
+            self.candle_dialog.clear_data()
+
     def start_optimization(self):
         """"""
         class_name = self.class_combo.currentText()
@@ -264,8 +328,11 @@ class BacktesterManager(QtWidgets.QWidget):
         """"""
         vt_symbol = self.symbol_line.text()
         interval = self.interval_combo.currentText()
-        start = self.start_date_edit.date().toPyDate()
-        end = self.end_date_edit.date().toPyDate()
+        start_date = self.start_date_edit.date()
+        end_date = self.end_date_edit.date()
+
+        start = datetime(start_date.year(), start_date.month(), start_date.day())
+        end = datetime(end_date.year(), end_date.month(), end_date.day())
 
         self.backtester_engine.start_downloading(
             vt_symbol,
@@ -283,6 +350,41 @@ class BacktesterManager(QtWidgets.QWidget):
             self.target_display
         )
         dialog.exec_()
+
+    def show_backtesting_trades(self):
+        """"""
+        if not self.trade_dialog.is_updated():
+            trades = self.backtester_engine.get_all_trades()
+            self.trade_dialog.update_data(trades)
+
+        self.trade_dialog.exec_()
+
+    def show_backtesting_orders(self):
+        """"""
+        if not self.order_dialog.is_updated():
+            orders = self.backtester_engine.get_all_orders()
+            self.order_dialog.update_data(orders)
+
+        self.order_dialog.exec_()
+
+    def show_daily_results(self):
+        """"""
+        if not self.daily_dialog.is_updated():
+            results = self.backtester_engine.get_all_daily_results()
+            self.daily_dialog.update_data(results)
+
+        self.daily_dialog.exec_()
+
+    def show_candle_chart(self):
+        """"""
+        if not self.candle_dialog.is_updated():
+            history = self.backtester_engine.get_history_data()
+            self.candle_dialog.update_history(history)
+
+            trades = self.backtester_engine.get_all_trades()
+            self.candle_dialog.update_trades(trades)
+
+        self.candle_dialog.exec_()
 
     def show(self):
         """"""
@@ -750,3 +852,197 @@ class OptimizationResultMonitor(QtWidgets.QDialog):
         vbox.addWidget(table)
 
         self.setLayout(vbox)
+
+
+class BacktestingTradeMonitor(BaseMonitor):
+    """
+    Monitor for backtesting trade data.
+    """
+
+    headers = {
+        "tradeid": {"display": "成交号 ", "cell": BaseCell, "update": False},
+        "orderid": {"display": "委托号", "cell": BaseCell, "update": False},
+        "symbol": {"display": "代码", "cell": BaseCell, "update": False},
+        "exchange": {"display": "交易所", "cell": EnumCell, "update": False},
+        "direction": {"display": "方向", "cell": DirectionCell, "update": False},
+        "offset": {"display": "开平", "cell": EnumCell, "update": False},
+        "price": {"display": "价格", "cell": BaseCell, "update": False},
+        "volume": {"display": "数量", "cell": BaseCell, "update": False},
+        "datetime": {"display": "时间", "cell": BaseCell, "update": False},
+        "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
+    }
+
+
+class BacktestingOrderMonitor(BaseMonitor):
+    """
+    Monitor for backtesting order data.
+    """
+
+    headers = {
+        "orderid": {"display": "委托号", "cell": BaseCell, "update": False},
+        "symbol": {"display": "代码", "cell": BaseCell, "update": False},
+        "exchange": {"display": "交易所", "cell": EnumCell, "update": False},
+        "type": {"display": "类型", "cell": EnumCell, "update": False},
+        "direction": {"display": "方向", "cell": DirectionCell, "update": False},
+        "offset": {"display": "开平", "cell": EnumCell, "update": False},
+        "price": {"display": "价格", "cell": BaseCell, "update": False},
+        "volume": {"display": "总数量", "cell": BaseCell, "update": False},
+        "traded": {"display": "已成交", "cell": BaseCell, "update": False},
+        "status": {"display": "状态", "cell": EnumCell, "update": False},
+        "datetime": {"display": "时间", "cell": BaseCell, "update": False},
+        "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
+    }
+
+
+class DailyResultMonitor(BaseMonitor):
+    """
+    Monitor for backtesting daily result.
+    """
+
+    headers = {
+        "date": {"display": "日期", "cell": BaseCell, "update": False},
+        "trade_count": {"display": "成交笔数", "cell": BaseCell, "update": False},
+        "start_pos": {"display": "开盘持仓", "cell": BaseCell, "update": False},
+        "end_pos": {"display": "收盘持仓", "cell": BaseCell, "update": False},
+        "turnover": {"display": "成交额", "cell": BaseCell, "update": False},
+        "commission": {"display": "手续费", "cell": BaseCell, "update": False},
+        "slippage": {"display": "滑点", "cell": BaseCell, "update": False},
+        "trading_pnl": {"display": "交易盈亏", "cell": BaseCell, "update": False},
+        "holding_pnl": {"display": "持仓盈亏", "cell": BaseCell, "update": False},
+        "total_pnl": {"display": "总盈亏", "cell": BaseCell, "update": False},
+        "net_pnl": {"display": "净盈亏", "cell": BaseCell, "update": False},
+    }
+
+
+class BacktestingResultDialog(QtWidgets.QDialog):
+    """
+    """
+
+    def __init__(
+        self,
+        main_engine: MainEngine,
+        event_engine: EventEngine,
+        title: str,
+        table_class: QtWidgets.QTableWidget
+    ):
+        """"""
+        super().__init__()
+
+        self.main_engine = main_engine
+        self.event_engine = event_engine
+        self.title = title
+        self.table_class = table_class
+
+        self.updated = False
+
+        self.init_ui()
+
+    def init_ui(self):
+        """"""
+        self.setWindowTitle(self.title)
+        self.resize(1100, 600)
+
+        self.table = self.table_class(self.main_engine, self.event_engine)
+
+        vbox = QtWidgets.QVBoxLayout()
+        vbox.addWidget(self.table)
+
+        self.setLayout(vbox)
+
+    def clear_data(self):
+        """"""
+        self.updated = False
+        self.table.setRowCount(0)
+
+    def update_data(self, data: list):
+        """"""
+        self.updated = True
+
+        data.reverse()
+        for obj in data:
+            self.table.insert_new_row(obj)
+
+    def is_updated(self):
+        """"""
+        return self.updated
+
+
+class CandleChartDialog(QtWidgets.QDialog):
+    """
+    """
+
+    def __init__(self):
+        """"""
+        super().__init__()
+
+        self.dt_ix_map = {}
+        self.updated = False
+        self.init_ui()
+
+    def init_ui(self):
+        """"""
+        self.setWindowTitle("回测K线图表")
+        self.resize(1400, 800)
+
+        # Create chart widget
+        self.chart = ChartWidget()
+        self.chart.add_plot("candle", hide_x_axis=True)
+        self.chart.add_plot("volume", maximum_height=200)
+        self.chart.add_item(CandleItem, "candle", "candle")
+        self.chart.add_item(VolumeItem, "volume", "volume")
+        self.chart.add_cursor()
+
+        # Add scatter item for showing tradings
+        self.trade_scatter = pg.ScatterPlotItem()
+        candle_plot = self.chart.get_plot("candle")
+        candle_plot.addItem(self.trade_scatter)
+
+        # Set layout
+        vbox = QtWidgets.QVBoxLayout()
+        vbox.addWidget(self.chart)
+        self.setLayout(vbox)
+
+    def update_history(self, history: list):
+        """"""
+        self.updated = True
+        self.chart.update_history(history)
+
+        for ix, bar in enumerate(history):
+            self.dt_ix_map[bar.datetime] = ix
+
+    def update_trades(self, trades: list):
+        """"""
+        trade_data = []
+        
+        for trade in trades:
+            ix = self.dt_ix_map[trade.datetime]
+
+            scatter = {
+                "pos": (ix, trade.price), 
+                "data": 1, 
+                "size": 14,
+                "pen": pg.mkPen((255, 255, 255))
+            }
+
+            if trade.direction == Direction.LONG:
+                scatter["symbol"] = "t1"
+                scatter["brush"] = pg.mkBrush((255, 255, 0))
+            else:
+                scatter["symbol"] = "t"
+                scatter["brush"] = pg.mkBrush((0, 0, 255))
+            
+            trade_data.append(scatter)
+
+        self.trade_scatter.setData(trade_data)
+        
+    def clear_data(self):
+        """"""
+        self.updated = False
+        self.chart.clear_all()
+
+        self.dt_ix_map.clear()
+        self.trade_scatter.clear()
+    
+    def is_updated(self):
+        """"""
+        return self.updated
