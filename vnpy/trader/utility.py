@@ -349,6 +349,16 @@ class ArrayManager(object):
             return result
         return result[-1]
 
+    def ma(self, n, array=False):
+        """
+        Moving average.
+        """
+        result = talib.MA(self.close, n)
+        if array:
+            return result
+        return result[-1]
+
+
     def std(self, n, array=False):
         """
         Standard deviation
@@ -416,6 +426,18 @@ class ArrayManager(object):
         down = mid - std * dev
 
         return up, down
+
+    def boll_double_up(self, n, entry_dev, exit_dev, array=False):
+        """
+        Bollinger Channel.
+        """
+        mid = self.ma(n, array)
+        std = self.std(n, array)
+
+        entry_up = mid + std * entry_dev
+        exit_up = mid + std * exit_dev
+
+        return entry_up, exit_up
 
     def keltner(self, n, dev, array=False):
         """
