@@ -58,7 +58,7 @@ class BacktesterManager(QtWidgets.QWidget):
         self.class_combo = QtWidgets.QComboBox()
         self.class_combo.addItems(self.class_names)
 
-        self.symbol_line = QtWidgets.QLineEdit("IF88.CFFEX")
+        self.symbol_line = QtWidgets.QLineEdit("rb1910.SHFE")
 
         self.interval_combo = QtWidgets.QComboBox()
         for inteval in Interval:
@@ -78,11 +78,11 @@ class BacktesterManager(QtWidgets.QWidget):
             QtCore.QDate.currentDate()
         )
 
-        self.rate_line = QtWidgets.QLineEdit("0.000025")
-        self.slippage_line = QtWidgets.QLineEdit("0.2")
-        self.size_line = QtWidgets.QLineEdit("300")
-        self.pricetick_line = QtWidgets.QLineEdit("0.2")
-        self.capital_line = QtWidgets.QLineEdit("1000000")
+        self.rate_line = QtWidgets.QLineEdit("0.00015")
+        self.slippage_line = QtWidgets.QLineEdit("1")
+        self.size_line = QtWidgets.QLineEdit("10")
+        self.pricetick_line = QtWidgets.QLineEdit("1")
+        self.capital_line = QtWidgets.QLineEdit("100000")
 
         backtesting_button = QtWidgets.QPushButton("开始回测")
         backtesting_button.clicked.connect(self.start_backtesting)

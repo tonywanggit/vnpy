@@ -439,6 +439,18 @@ class ArrayManager(object):
 
         return entry_up, exit_up
 
+    def boll_double_down(self, n, entry_dev, exit_dev, array=False):
+        """
+        Bollinger Channel.
+        """
+        mid = self.ma(n, array)
+        std = self.std(n, array)
+
+        entry_up = mid - std * entry_dev
+        exit_up = mid - std * exit_dev
+
+        return entry_up, exit_up
+
     def keltner(self, n, dev, array=False):
         """
         Keltner Channel.

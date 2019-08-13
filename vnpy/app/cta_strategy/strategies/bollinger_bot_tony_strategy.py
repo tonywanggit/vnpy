@@ -1,9 +1,7 @@
 # encoding: UTF-8
 
 """
-仅在知乎Live《vn.py的过去、现在和将来》中分享，请勿外传。
-
-基于布林通道通道的交易策略，适合用在股指上5分钟线上。
+基于布林通道的双边交易策略
 """
 
 from vnpy.app.cta_strategy import (
@@ -15,27 +13,46 @@ from vnpy.app.cta_strategy import (
 )
 
 
-class BollingerBotStrategy(CtaTemplate):
+class BollingerBotTonyStrategy(CtaTemplate):
     """基于布林通道的交易策略"""
     author = u'tonywang_efun'
 
     # 策略参数
+    fixedSize = 2  # 每次交易的数量
+
+    # （多头参数）
     bollLength = 40  # 通道窗口数
     entryDev = 3.2  # 开仓偏差
     exitDev = 1.2  # 平仓偏差
     trailingPrcnt = 0.6  # 移动止损百分比
     maLength = 13  # 过滤用均线窗口
     initDays = 10  # 初始化数据所用的天数
-    fixedSize = 1  # 每次交易的数量
 
-    # 策略变量
+    # （空头参数）
+    shortBollLength = 40  # 通道窗口数
+    shortEntryDev = 3.2  # 开仓偏差
+    shortExitDev = 1.2  # 平仓偏差
+    shortTrailingPrcnt = 0.6  # 移动止损百分比
+    shortMaLength = 13  # 过滤用均线窗口
+    shortInitDays = 10  # 初始化数据所用的天数
+
+    # 策略变量(多头)
     entryUp = 0  # 开仓上轨
     exitUp = 0  # 平仓上轨
     maFilter = 0  # 均线过滤
-    maFilter1 = 0  # 上一期均线
+    maFilterPrevious = 0  # 上一期均线
     intraTradeHigh = 0  # 持仓期内的最高点
     longEntry = 0  # 多头开仓
     longExit = 0  # 多头平仓
+
+    # 策略变量(空头)
+    shortEntryUp = 0  # 开仓上轨
+    shortExitUp = 0  # 平仓上轨
+    shortMaFilter = 0  # 均线过滤
+    shortMaFilterPrevious = 0  # 上一期均线
+    intraTradeLow = 0  # 持仓期内的最最低点
+    shortEntry = 0  # 空头开仓
+    shortExit = 0  # 空头平仓
 
     # 参数列表，保存了参数的名称
     parameters = ['bollLength',
@@ -44,18 +61,30 @@ class BollingerBotStrategy(CtaTemplate):
                   'trailingPrcnt',
                   'maLength',
                   'initDays',
-                  'fixedSize']
+                  'fixedSize',
+                  'shortBollLength',
+                  'shortEntryDev',
+                  'shortExitDev',
+                  'shortTrailingPrcnt',
+                  'shortMaLength',
+                  'shortInitDays']
 
     # 变量列表，保存了变量的名称
     variables = ['entryUp',
                  'exitUp',
                  'intraTradeHigh',
-                 'longEntry']
+                 'longEntry',
+                 'longExit',
+                 'shortEntryUp',
+                 'shortExitUp',
+                 'intraTradeLow',
+                 'shortEntry',
+                 'shortExit']
 
     # ----------------------------------------------------------------------
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
         """"""
-        super(BollingerBotStrategy, self).__init__(
+        super(BollingerBotTonyStrategy, self).__init__(
             cta_engine, strategy_name, vt_symbol, setting
         )
 
@@ -108,28 +137,46 @@ class BollingerBotStrategy(CtaTemplate):
         if not am.inited:
             return
 
-        # 计算指标数值
+        # 计算多头指标数值
         self.entryUp, self.exitUp = am.boll_double_up(self.bollLength, self.entryDev, self.exitDev)
         ma_array = am.sma(self.maLength, True)
         self.maFilter = ma_array[-1]
-        self.maFilter1 = ma_array[-2]
+        self.maFilterPrevious = ma_array[-2]
+
+        # 计算空头指标数值
+        self.shortEntryUp, self.shortExitUp = am.boll_double_down(self.shortBollLength, self.shortEntryDev,
+                                                                  self.shortExitDev)
+        short_ma_array = am.sma(self.shortMaLength, True)
+        self.shortMaFilter = short_ma_array[-1]
+        self.shortMaFilterPrevious = short_ma_array[-2]
 
         # 当前无仓位，发送OCO开仓委托
         if self.pos == 0:
             self.intraTradeHigh = bar.high_price
+            self.intraTradeLow = bar.low_price
 
-            if bar.close_price > self.maFilter > self.maFilter1:
+            if bar.close_price > self.maFilter > self.maFilterPrevious:
                 self.longEntry = self.entryUp
                 self.buy(self.longEntry, self.fixedSize, True)
+            elif bar.close_price < self.shortMaFilter < self.shortMaFilterPrevious:
+                self.shortEntry = self.shortEntryUp
+                self.short(self.shortEntry, self.fixedSize, True)
 
         # 持有多头仓位
         elif self.pos > 0:
             self.intraTradeHigh = max(self.intraTradeHigh, bar.high_price)
-
             self.longExit = self.intraTradeHigh * (1 - self.trailingPrcnt / 100)
             self.longExit = min(self.longExit, self.exitUp)
 
             self.sell(self.longExit, abs(self.pos), True)
+
+        # 持有空头仓位
+        elif self.pos < 0:
+            self.intraTradeLow = min(self.intraTradeLow, bar.low_price)
+            self.shortExit = self.intraTradeLow * (1 - self.shortTrailingPrcnt / 100)
+            self.shortExit = max(self.shortExit, self.shortExitUp)
+
+            self.cover(self.shortExit, abs(self.pos), True)
 
         # 发出状态更新事件
         self.put_event()
