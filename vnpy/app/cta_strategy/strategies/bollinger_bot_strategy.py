@@ -26,7 +26,7 @@ class BollingerBotStrategy(CtaTemplate):
     trailingPrcnt = 0.6  # 移动止损百分比
     maLength = 13  # 过滤用均线窗口
     initDays = 10  # 初始化数据所用的天数
-    fixedSize = 1  # 每次交易的数量
+    fixedSize = 2  # 每次交易的数量
 
     # 策略变量
     entryUp = 0  # 开仓上轨
