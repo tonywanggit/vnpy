@@ -19,14 +19,14 @@ class BollingerBotTonyStrategy(CtaTemplate):
 
     # 策略参数
     fixedSize = 2  # 每次交易的数量
+    initDays = 10  # 初始化数据所用的天数
 
     # （多头参数）
-    bollLength = 40  # 通道窗口数
+    bollLength = 44  # 通道窗口数
     entryDev = 3.2  # 开仓偏差
     exitDev = 1.2  # 平仓偏差
     trailingPrcnt = 0.6  # 移动止损百分比
     maLength = 13  # 过滤用均线窗口
-    initDays = 10  # 初始化数据所用的天数
 
     # （空头参数）
     shortBollLength = 60  # 通道窗口数
@@ -34,7 +34,6 @@ class BollingerBotTonyStrategy(CtaTemplate):
     shortExitDev = 0.7  # 平仓偏差
     shortTrailingPrcnt = 0.3  # 移动止损百分比
     shortMaLength = 18  # 过滤用均线窗口
-    shortInitDays = 10  # 初始化数据所用的天数
 
     # 策略变量(多头)
     entryUp = 0  # 开仓上轨
@@ -55,19 +54,18 @@ class BollingerBotTonyStrategy(CtaTemplate):
     shortExit = 0  # 空头平仓
 
     # 参数列表，保存了参数的名称
-    parameters = ['bollLength',
+    parameters = ['fixedSize',
+                  'bollLength',
                   'entryDev',
                   'exitDev',
                   'trailingPrcnt',
                   'maLength',
                   'initDays',
-                  'fixedSize',
                   'shortBollLength',
                   'shortEntryDev',
                   'shortExitDev',
                   'shortTrailingPrcnt',
-                  'shortMaLength',
-                  'shortInitDays']
+                  'shortMaLength']
 
     # 变量列表，保存了变量的名称
     variables = ['entryUp',
@@ -88,8 +86,8 @@ class BollingerBotTonyStrategy(CtaTemplate):
             cta_engine, strategy_name, vt_symbol, setting
         )
 
-        self.bg = BarGenerator(self.on_bar, 5, self.on_5min_bar)
-        self.am = ArrayManager(60)
+        self.bg = BarGenerator(self.on_bar, 6, self.on_5min_bar)
+        self.am = ArrayManager(100)
 
     # ----------------------------------------------------------------------
     def on_init(self):
