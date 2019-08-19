@@ -20,13 +20,13 @@ class BollingerBotStrategy(CtaTemplate):
     author = u'tonywang_efun'
 
     # 策略参数
+    fixedSize = 2  # 每次交易的数量
     bollLength = 40  # 通道窗口数
     entryDev = 3.2  # 开仓偏差
     exitDev = 1.2  # 平仓偏差
     trailingPrcnt = 0.6  # 移动止损百分比
     maLength = 13  # 过滤用均线窗口
     initDays = 10  # 初始化数据所用的天数
-    fixedSize = 2  # 每次交易的数量
 
     # 策略变量
     entryUp = 0  # 开仓上轨
@@ -38,13 +38,13 @@ class BollingerBotStrategy(CtaTemplate):
     longExit = 0  # 多头平仓
 
     # 参数列表，保存了参数的名称
-    parameters = ['bollLength',
+    parameters = ['fixedSize',
+                  'bollLength',
                   'entryDev',
                   'exitDev',
                   'trailingPrcnt',
                   'maLength',
-                  'initDays',
-                  'fixedSize']
+                  'initDays']
 
     # 变量列表，保存了变量的名称
     variables = ['entryUp',
