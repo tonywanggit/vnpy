@@ -18,22 +18,22 @@ class BollingerBotTonyStrategy(CtaTemplate):
     author = u'tonywang_efun'
 
     # 策略参数
-    fixedSize = 2  # 每次交易的数量
-    initDays = 10  # 初始化数据所用的天数
+    fixedSize = 3  # 每次交易的数量
+    initDays = 2  # 初始化数据所用的天数
 
     # （多头参数）
-    bollLength = 44  # 通道窗口数
+    bollLength = 46  # 通道窗口数
     entryDev = 3.2  # 开仓偏差
     exitDev = 1.2  # 平仓偏差
     trailingPrcnt = 0.6  # 移动止损百分比
     maLength = 13  # 过滤用均线窗口
 
     # （空头参数）
-    shortBollLength = 60  # 通道窗口数
+    shortBollLength = 58  # 通道窗口数
     shortEntryDev = 3.6  # 开仓偏差
     shortExitDev = 0.7  # 平仓偏差
-    shortTrailingPrcnt = 0.3  # 移动止损百分比
-    shortMaLength = 18  # 过滤用均线窗口
+    shortTrailingPrcnt = 0.8  # 移动止损百分比
+    shortMaLength = 47  # 过滤用均线窗口
 
     # 策略变量(多头)
     entryUp = 0  # 开仓上轨
@@ -171,7 +171,7 @@ class BollingerBotTonyStrategy(CtaTemplate):
         # 持有空头仓位
         elif self.pos < 0:
             self.intraTradeLow = min(self.intraTradeLow, bar.low_price)
-            self.shortExit = self.intraTradeLow * (1 - self.shortTrailingPrcnt / 100)
+            self.shortExit = self.intraTradeLow * (1 + self.shortTrailingPrcnt / 100)
             self.shortExit = max(self.shortExit, self.shortExitUp)
 
             self.cover(self.shortExit, abs(self.pos), True)
