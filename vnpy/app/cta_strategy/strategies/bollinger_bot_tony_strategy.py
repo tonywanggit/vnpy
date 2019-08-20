@@ -18,8 +18,8 @@ class BollingerBotTonyStrategy(CtaTemplate):
     author = u'tonywang_efun'
 
     # 策略参数
-    fixedSize = 3  # 每次交易的数量
-    initDays = 2  # 初始化数据所用的天数
+    fixedSize = 2  # 每次交易的数量
+    initDays = 4  # 初始化数据所用的天数
 
     # （多头参数）
     bollLength = 46  # 通道窗口数
@@ -54,13 +54,13 @@ class BollingerBotTonyStrategy(CtaTemplate):
     shortExit = 0  # 空头平仓
 
     # 参数列表，保存了参数的名称
-    parameters = ['fixedSize',
+    parameters = ['initDays',
+                  'fixedSize',
                   'bollLength',
                   'entryDev',
                   'exitDev',
                   'trailingPrcnt',
                   'maLength',
-                  'initDays',
                   'shortBollLength',
                   'shortEntryDev',
                   'shortExitDev',
@@ -73,8 +73,8 @@ class BollingerBotTonyStrategy(CtaTemplate):
                  'intraTradeHigh',
                  'longEntry',
                  'longExit',
-                 'shortEntryUp',
-                 'shortExitUp',
+                 'shortEntry',
+                 'shortExit',
                  'intraTradeLow',
                  'shortEntry',
                  'shortExit']
@@ -86,7 +86,7 @@ class BollingerBotTonyStrategy(CtaTemplate):
             cta_engine, strategy_name, vt_symbol, setting
         )
 
-        self.bg = BarGenerator(self.on_bar, 6, self.on_5min_bar)
+        self.bg = BarGenerator(self.on_bar, 6, self.on_xmin_bar)
         self.am = ArrayManager(100)
 
     # ----------------------------------------------------------------------
@@ -103,6 +103,7 @@ class BollingerBotTonyStrategy(CtaTemplate):
         Callback when strategy is started.
         """
         self.write_log("策略启动")
+        self.put_event()
 
     # ----------------------------------------------------------------------
     def on_stop(self):
@@ -110,6 +111,7 @@ class BollingerBotTonyStrategy(CtaTemplate):
         Callback when strategy is stopped.
         """
         self.write_log("策略停止")
+        self.put_event()
 
     # ----------------------------------------------------------------------
     def on_tick(self, tick: TickData):
@@ -125,8 +127,8 @@ class BollingerBotTonyStrategy(CtaTemplate):
         """
         self.bg.update_bar(bar)
 
-    def on_5min_bar(self, bar: BarData):
-        """收到5分钟K线"""
+    def on_xmin_bar(self, bar: BarData):
+        """收到x分钟K线"""
         # 撤销之前发出的尚未成交的委托（包括限价单和停止单）
         self.cancel_all()
 

@@ -82,7 +82,7 @@ class BacktesterManager(QtWidgets.QWidget):
         self.slippage_line = QtWidgets.QLineEdit("1")
         self.size_line = QtWidgets.QLineEdit("10")
         self.pricetick_line = QtWidgets.QLineEdit("1")
-        self.capital_line = QtWidgets.QLineEdit("100000")
+        self.capital_line = QtWidgets.QLineEdit("30000")
 
         backtesting_button = QtWidgets.QPushButton("开始回测")
         backtesting_button.clicked.connect(self.start_backtesting)
