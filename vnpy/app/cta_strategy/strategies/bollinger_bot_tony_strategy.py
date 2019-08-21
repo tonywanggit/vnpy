@@ -36,8 +36,8 @@ class BollingerBotTonyStrategy(CtaTemplate):
     shortMaLength = 47  # 过滤用均线窗口
 
     # 策略变量(多头)
-    entryUp = 0  # 开仓上轨
-    exitUp = 0  # 平仓上轨
+    entryLine = 0  # 开仓上轨
+    exitLine = 0  # 平仓上轨
     maFilter = 0  # 均线过滤
     maFilterPrevious = 0  # 上一期均线
     intraTradeHigh = 0  # 持仓期内的最高点
@@ -45,8 +45,8 @@ class BollingerBotTonyStrategy(CtaTemplate):
     longExit = 0  # 多头平仓
 
     # 策略变量(空头)
-    shortEntryUp = 0  # 开仓上轨
-    shortExitUp = 0  # 平仓上轨
+    shortEntryLine = 0  # 开仓上轨
+    shortExitLine = 0  # 平仓上轨
     shortMaFilter = 0  # 均线过滤
     shortMaFilterPrevious = 0  # 上一期均线
     intraTradeLow = 0  # 持仓期内的最最低点
@@ -68,14 +68,14 @@ class BollingerBotTonyStrategy(CtaTemplate):
                   'shortMaLength']
 
     # 变量列表，保存了变量的名称
-    variables = ['entryUp',
-                 'exitUp',
+    variables = ['entryLine',
+                 'exitLine',
+                 'shortEntryLine',
+                 'shortExitLine',
                  'intraTradeHigh',
+                 'intraTradeLow',
                  'longEntry',
                  'longExit',
-                 'shortEntry',
-                 'shortExit',
-                 'intraTradeLow',
                  'shortEntry',
                  'shortExit']
 
@@ -138,14 +138,14 @@ class BollingerBotTonyStrategy(CtaTemplate):
             return
 
         # 计算多头指标数值
-        self.entryUp, self.exitUp = am.boll_double_up(self.bollLength, self.entryDev, self.exitDev)
+        self.entryLine, self.exitLine = am.boll_double_up(self.bollLength, self.entryDev, self.exitDev)
         ma_array = am.sma(self.maLength, True)
         self.maFilter = ma_array[-1]
         self.maFilterPrevious = ma_array[-2]
 
         # 计算空头指标数值
-        self.shortEntryUp, self.shortExitUp = am.boll_double_down(self.shortBollLength, self.shortEntryDev,
-                                                                  self.shortExitDev)
+        self.shortEntryLine, self.shortExitLine = am.boll_double_down(self.shortBollLength, self.shortEntryDev,
+                                                                      self.shortExitDev)
         short_ma_array = am.sma(self.shortMaLength, True)
         self.shortMaFilter = short_ma_array[-1]
         self.shortMaFilterPrevious = short_ma_array[-2]
@@ -156,17 +156,17 @@ class BollingerBotTonyStrategy(CtaTemplate):
             self.intraTradeLow = bar.low_price
 
             if bar.close_price > self.maFilter > self.maFilterPrevious:
-                self.longEntry = self.entryUp
+                self.longEntry = self.entryLine
                 self.buy(self.longEntry, self.fixedSize, True)
             elif bar.close_price < self.shortMaFilter < self.shortMaFilterPrevious:
-                self.shortEntry = self.shortEntryUp
+                self.shortEntry = self.shortEntryLine
                 self.short(self.shortEntry, self.fixedSize, True)
 
         # 持有多头仓位
         elif self.pos > 0:
             self.intraTradeHigh = max(self.intraTradeHigh, bar.high_price)
             self.longExit = self.intraTradeHigh * (1 - self.trailingPrcnt / 100)
-            self.longExit = min(self.longExit, self.exitUp)
+            self.longExit = min(self.longExit, self.exitLine)
 
             self.sell(self.longExit, abs(self.pos), True)
 
@@ -174,7 +174,7 @@ class BollingerBotTonyStrategy(CtaTemplate):
         elif self.pos < 0:
             self.intraTradeLow = min(self.intraTradeLow, bar.low_price)
             self.shortExit = self.intraTradeLow * (1 + self.shortTrailingPrcnt / 100)
-            self.shortExit = max(self.shortExit, self.shortExitUp)
+            self.shortExit = max(self.shortExit, self.shortExitLine)
 
             self.cover(self.shortExit, abs(self.pos), True)
 
