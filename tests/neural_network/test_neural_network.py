@@ -10,15 +10,20 @@ from trader.constant import Exchange, Interval
 from vnpy.trader.database import database_manager
 
 if __name__ == '__main__':
-    input_nodes = 300
-    hidden_nodes = 100
+
+    input_data_len = 100  # 输入60根分钟K线的数据（高开低收量）= 300数据点
+    target_data_len = 15  # 预测10分钟后的高点
+    profit_percent = 0.005  # 1万20 盈利点 - 1万1.5 * 2 手续费 = 17 元 单笔
+
+    input_nodes = input_data_len * 5
+    hidden_nodes = input_data_len * 3
     output_nodes = 3
-    learning_rate = 0.2
+    learning_rate = 0.1
 
     symbol = 'rb1910'
     exchange = Exchange.SHFE
     interval = Interval.MINUTE
-    start = datetime(2018, 1, 20)
+    start = datetime(2019, 8, 10)
     end = datetime.now()
 
     neuralNetwork = NeuralNetwork(input_nodes, hidden_nodes, output_nodes, learning_rate)
@@ -31,13 +36,9 @@ if __name__ == '__main__':
     if bar_data_len < 1000:
         print("need more data >= 50000")
 
-    test_data_len = 1000  # 测试集
+    test_data_len = 200  # 测试集
     train_data_len = bar_data_len - test_data_len  # 训练集
     print(f"train data size: {train_data_len}, test data size: {test_data_len}")
-
-    input_data_len = 60  # 输入60根分钟K线的数据（高开低收量）= 300数据点
-    target_data_len = 10  # 预测10分钟后的高点
-    profit_percent = 0.005  # 1万20 盈利点 - 1万1.5 * 2 手续费 = 17 元 单笔
 
     epochs = 1
     for e in range(epochs):
@@ -68,8 +69,10 @@ if __name__ == '__main__':
             neuralNetwork.train(input_data, target_data)
             pass
 
-    print(f"Start test range: {test_data_len - input_data_len - target_data_len + 1}")
+    print(f"Start test range: {test_data_len - input_data_len - target_data_len + 1}, date: {bar_data[train_data_len].datetime}")
     scordcard = []
+    prediction_result = []
+    actual_result = []
     for test_index in range(test_data_len - input_data_len - target_data_len + 1):
         input_bar_data = bar_data[train_data_len + test_index: train_data_len + test_index + input_data_len]
         target_bar_data = bar_data[train_data_len + test_index + input_data_len
@@ -87,20 +90,27 @@ if __name__ == '__main__':
         target_profit_percent = (target_max_high - input_last_close) / input_last_close
 
         output = neuralNetwork.query(input_data)
-        output_label = np.argmax(output)
+        output_label = int(np.argmax(output))
 
         current_label = 0
         if target_profit_percent > profit_percent:  # 多开信号
             current_label = 1
+            print(bar_data[train_data_len + test_index + input_data_len].datetime, input_last_close, target_max_high, target_profit_percent)
         elif target_profit_percent < -profit_percent:  # 空开信号
             current_label = 2
         else:
             current_label = 0
+
+        prediction_result.append(output_label)
+        actual_result.append(current_label)
 
         if current_label == output_label:
             scordcard.append(1)
         else:
             scordcard.append(0)
 
+
     scordcard_array = np.asarray(scordcard)
     print("Performance = ", scordcard_array.sum() / scordcard_array.size)
+    print(f"Predict Long {prediction_result.count(1)} , Short {prediction_result.count(2)}, Sleep {prediction_result.count(0)}")
+    print(f"Actual Long {actual_result.count(1)} , Short {actual_result.count(2)}, Sleep {actual_result.count(0)}")
