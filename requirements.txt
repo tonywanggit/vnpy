@@ -20,3 +20,4 @@ ibapi
 deap
 pyzmq
 scipy
+scikit-learn

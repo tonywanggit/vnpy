@@ -2,6 +2,8 @@
 # @Time    : 2019/8/26 9:12
 # @Author  : Tony
 """神经网络测试用例"""
+import sys
+
 import numpy as np
 from datetime import datetime
 
@@ -64,6 +66,7 @@ if __name__ == '__main__':
 
     if bar_data_len < 1000:
         print("need more data >= 50000")
+        sys.exit()
 
     test_data_len = 200  # 测试集
     train_data_len = bar_data_len - test_data_len  # 训练集
