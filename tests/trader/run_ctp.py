@@ -21,7 +21,7 @@ def main():
     event_engine = EventEngine()
 
     main_engine = MainEngine(event_engine)
-    main_engine.add_gateway(CtptestGateway)
+    # main_engine.add_gateway(CtptestGateway)
     main_engine.add_gateway(CtpGateway)
 
     main_engine.add_app(CtaStrategyApp)
