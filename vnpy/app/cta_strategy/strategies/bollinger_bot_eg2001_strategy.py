@@ -9,34 +9,34 @@ from vnpy.app.cta_strategy import (
     BarGenerator,
     ArrayManager,
     BarData,
-    TickData
+    TickData,
+    TradeData
 )
 
 
-class BollingerBotAG1912Strategy(CtaTemplate):
+class BollingerBotEG2001Strategy(CtaTemplate):
     """基于布林通道的交易策略"""
     author = u'tonywang_efun'
 
     # 策略参数
-    initDays = 10  # 初始化数据所用的天数
-    fixedSize = 1  # 每次交易的数量
+    initDays = 10        # 初始化数据所用的天数
+    fixedSize = 1       # 每次交易的数量
+
+    fixWinPrcnt = 1.2   # 固定止盈
 
     # （多头参数）
-    fixWinPrcnt = 1.5   # 固定止盈百分比
-    bollLength = 58  # 通道窗口数
-    entryDev = 3.2  # 开仓偏差
-    exitDev = 1.1  # 平仓偏差
-    trailingPrcnt = 1.4  # 移动止损百分比
-    maLength = 11  # 过滤用均线窗口
+    bollLength = 39  # 通道窗口数
+    entryDev = 3.0  # 开仓偏差
+    exitDev = 1.0  # 平仓偏差
+    trailingPrcnt = 1.6  # 移动止损百分比
+    maLength = 16  # 过滤用均线窗口
 
     # （空头参数）
-    shortfixWinPrcnt = 1.8   # 固定止盈百分比
-    shortBollLength = 28  # 通道窗口数
-    shortEntryDev = 4.4  # 开仓偏差
-    shortExitDev = 1.4  # 平仓偏差
-    shortTrailingPrcnt = 1.0  # 移动止损百分比
-    shortMaLength = 42  # 过滤用均线窗口
-
+    shortBollLength = 27  # 通道窗口数
+    shortEntryDev = 3.6  # 开仓偏差
+    shortExitDev = 2.0  # 平仓偏差
+    shortTrailingPrcnt = 0.8  # 移动止损百分比
+    shortMaLength = 47  # 过滤用均线窗口
 
     # 公共策略变量
     posPrice = 0    # 持仓价
@@ -63,7 +63,6 @@ class BollingerBotAG1912Strategy(CtaTemplate):
     parameters = ['initDays',
                   'fixedSize',
                   'fixWinPrcnt',
-                  'shortfixWinPrcnt',
                   'bollLength',
                   'entryDev',
                   'exitDev',
@@ -76,11 +75,11 @@ class BollingerBotAG1912Strategy(CtaTemplate):
                   'shortMaLength']
 
     # 变量列表，保存了变量的名称
-    variables = ['posPrice',
-                 'entryLine',
+    variables = ['entryLine',
                  'exitLine',
                  'shortEntryLine',
                  'shortExitLine',
+                 'posPrice',
                  'intraTradeHigh',
                  'intraTradeLow',
                  'longEntry',
@@ -91,7 +90,7 @@ class BollingerBotAG1912Strategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
         """"""
-        super(BollingerBotAG1912Strategy, self).__init__(
+        super(BollingerBotEG2001Strategy, self).__init__(
             cta_engine, strategy_name, vt_symbol, setting
         )
 
@@ -173,9 +172,9 @@ class BollingerBotAG1912Strategy(CtaTemplate):
 
         # 持有多头仓位
         elif self.pos > 0:
-            if 0 < self.posPrice < bar.close_price \
+            if bar.close_price > self.posPrice \
                     and (bar.close_price - self.posPrice) / self.posPrice > (self.fixWinPrcnt / 100):
-                print("fix percent sell-------------------------------")
+                print("fix sell-------------------------------")
                 self.sell(bar.close_price * 0.99, abs(self.pos))
             else:
                 self.intraTradeHigh = max(self.intraTradeHigh, bar.high_price)
@@ -186,16 +185,11 @@ class BollingerBotAG1912Strategy(CtaTemplate):
 
         # 持有空头仓位
         elif self.pos < 0:
-            if bar.close_price < self.posPrice \
-                    and (self.posPrice - bar.close_price) / self.posPrice > (self.shortfixWinPrcnt / 100):
-                print("fix percent cover-------------------------------")
-                self.cover(bar.close_price * 1.01, abs(self.pos))
-            else:
-                self.intraTradeLow = min(self.intraTradeLow, bar.low_price)
-                self.shortExit = self.intraTradeLow * (1 + self.shortTrailingPrcnt / 100)
-                self.shortExit = max(self.shortExit, self.shortExitLine)
+            self.intraTradeLow = min(self.intraTradeLow, bar.low_price)
+            self.shortExit = self.intraTradeLow * (1 + self.shortTrailingPrcnt / 100)
+            self.shortExit = max(self.shortExit, self.shortExitLine)
 
-                self.cover(self.shortExit, abs(self.pos), True)
+            self.cover(self.shortExit, abs(self.pos), True)
 
         # 发出状态更新事件
         self.put_event()
@@ -205,7 +199,7 @@ class BollingerBotAG1912Strategy(CtaTemplate):
         pass
 
     # ----------------------------------------------------------------------
-    def on_trade(self, trade):
+    def on_trade(self, trade: TradeData):
         # 发出状态更新事件
 
         print(trade)
