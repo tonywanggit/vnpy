@@ -6,9 +6,10 @@ from rqdatac.services.basic import all_instruments as rqdata_all_instruments
 from rqdatac.services.get_price import get_price as rqdata_get_price
 from rqdatac.share.errors import AuthenticationFailed
 
-from .setting import SETTINGS
-from .constant import Exchange, Interval
-from .object import BarData, HistoryRequest
+from vnpy.trader.mddata import MdDataApi
+from vnpy.trader.setting import SETTINGS
+from vnpy.trader.constant import Exchange, Interval
+from vnpy.trader.object import BarData, HistoryRequest
 
 
 INTERVAL_VT2RQ = {
@@ -24,7 +25,7 @@ INTERVAL_ADJUSTMENT_MAP = {
 }
 
 
-class RqdataClient:
+class RqdataClient(MdDataApi):
     """
     Client for querying history data from RQData.
     """
@@ -108,6 +109,8 @@ class RqdataClient:
         interval = req.interval
         start = req.start
         end = req.end
+
+        enum_eq_result = req.exchange == Exchange.SHFE
 
         rq_symbol = self.to_rq_symbol(symbol, exchange)
         if rq_symbol not in self.symbols:

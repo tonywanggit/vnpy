@@ -8,7 +8,7 @@ from numpy import size
 from trader.constant import Interval, Exchange
 from trader.database import database_manager
 from trader.object import HistoryRequest
-from trader.rqdata import rqdata_client
+from trader.mddata import mddata_client
 
 
 def download_history_data(symbol, exchange):
@@ -27,13 +27,13 @@ def download_history_data(symbol, exchange):
             start=start_date,
             end=end_date
         )
-        data = rqdata_client.query_history(req)
+        data = mddata_client.query_history(req)
         print(size(data))
         database_manager.save_bar_data(data)
 
 
 if __name__ == '__main__':
-    rqdata_client.init()
+    mddata_client.init()
 
     # 实盘品种
     # download_history_data("RB1910", "SHFE")   # 螺纹钢

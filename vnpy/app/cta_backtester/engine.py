@@ -5,12 +5,13 @@ from datetime import datetime
 from threading import Thread
 from pathlib import Path
 
+from vnpy.trader.setting import SETTINGS
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
 from vnpy.trader.constant import Interval
 from vnpy.trader.utility import extract_vt_symbol
 from vnpy.trader.object import HistoryRequest
-from vnpy.trader.rqdata import rqdata_client
+from vnpy.trader.mddata import mddata_client
 from vnpy.trader.database import database_manager
 from vnpy.app.cta_strategy import (
     CtaTemplate,
@@ -63,9 +64,10 @@ class BacktesterEngine(BaseEngine):
         """
         Init RQData client.
         """
-        result = rqdata_client.init()
+        result = mddata_client.init()
+        md_data_api = SETTINGS["mddata.api"]
         if result:
-            self.write_log("RQData数据接口初始化成功")
+            self.write_log(f"{md_data_api}数据接口初始化成功")
 
     def write_log(self, msg: str):
         """"""
@@ -355,11 +357,18 @@ class BacktesterEngine(BaseEngine):
             data = self.main_engine.query_history(req, contract.gateway_name)
         # Otherwise use RQData to query data
         else:
-            data = rqdata_client.query_history(req)
+            try:
+                data = mddata_client.query_history(req)
+            except Exception as ex:
+                print(repr(ex))
+                self.write_log(f"{symbol}.{exchange.value}合约下载失败：{ex.args}")
+                self.thread = None
+                return
 
         if data:
+            self.write_log(f"{vt_symbol}-{interval}历史数据下载完成, 共计：{len(data)}")
             database_manager.save_bar_data(data)
-            self.write_log(f"{vt_symbol}-{interval}历史数据下载完成")
+            self.write_log(f"{vt_symbol}-{interval}历史数据保存成功")
         else:
             self.write_log(f"数据下载失败，无法获取{vt_symbol}的历史数据")
 

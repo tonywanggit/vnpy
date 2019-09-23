@@ -10,6 +10,7 @@ from threading import Thread
 
 from pandas import DataFrame
 
+from trader.setting import SETTINGS
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
 from vnpy.trader.constant import Direction, Offset, OrderType, Interval
@@ -26,7 +27,7 @@ from vnpy.trader.object import (
     LogData,
     BarData
 )
-from vnpy.trader.rqdata import rqdata_client
+from vnpy.trader.mddata import mddata_client
 
 
 APP_NAME = "ScriptTrader"
@@ -49,9 +50,10 @@ class ScriptEngine(BaseEngine):
         """
         Start script engine.
         """
-        result = rqdata_client.init()
+        result = mddata_client.init()
+        md_data_api = SETTINGS("mdata.api")
         if result:
-            self.write_log("RQData数据接口初始化成功")
+            self.write_log(f"{md_data_api}数据接口初始化成功")
 
     def start_strategy(self, script_path: str):
         """
@@ -255,7 +257,7 @@ class ScriptEngine(BaseEngine):
             interval=interval
         )
 
-        return get_data(rqdata_client.query_history, arg=req, use_df=use_df)
+        return get_data(mddata_client.query_history, arg=req, use_df=use_df)
 
     def write_log(self, msg: str) -> None:
         """"""

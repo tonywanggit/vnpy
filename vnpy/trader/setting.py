@@ -22,8 +22,13 @@ SETTINGS = {
     "email.sender": "",
     "email.receiver": "",
 
+    "mddata.api": "rqdata",
+
     "rqdata.username": "",
     "rqdata.password": "",
+
+    "jqdata.username": "",
+    "jqdata.password": "",
 
     "database.driver": "mysql",  # see database.Driver
     "database.database": "neuralnetwork",  # for sqlite, use this as filepath

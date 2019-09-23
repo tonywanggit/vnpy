@@ -21,3 +21,4 @@ deap
 pyzmq
 scipy
 scikit-learn
+jqdatasdk
