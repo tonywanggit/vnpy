@@ -13,7 +13,7 @@ from vnpy.app.cta_strategy import (
 )
 
 
-class BollingerBotAG1912Strategy(CtaTemplate):
+class BollingerBotAP001Strategy(CtaTemplate):
     """基于布林通道的交易策略"""
     author = u'tonywang_efun'
 
@@ -22,20 +22,20 @@ class BollingerBotAG1912Strategy(CtaTemplate):
     fixedSize = 1  # 每次交易的数量
 
     # （多头参数）
-    fixWinPrcnt = 1.5   # 固定止盈百分比
+    fixWinPrcnt = 2.4   # 固定止盈百分比
     bollLength = 58  # 通道窗口数
-    entryDev = 3.2  # 开仓偏差
-    exitDev = 1.1  # 平仓偏差
-    trailingPrcnt = 1.4  # 移动止损百分比
-    maLength = 11  # 过滤用均线窗口
+    entryDev = 2.6  # 开仓偏差
+    exitDev = 1.2  # 平仓偏差
+    trailingPrcnt = 1.0  # 移动止损百分比
+    maLength = 12  # 过滤用均线窗口
 
     # （空头参数）
-    shortfixWinPrcnt = 1.8   # 固定止盈百分比
-    shortBollLength = 28  # 通道窗口数
-    shortEntryDev = 4.4  # 开仓偏差
-    shortExitDev = 1.4  # 平仓偏差
-    shortTrailingPrcnt = 1.0  # 移动止损百分比
-    shortMaLength = 42  # 过滤用均线窗口
+    shortfixWinPrcnt = 2.9   # 固定止盈百分比
+    shortBollLength = 26  # 通道窗口数
+    shortEntryDev = 2.4  # 开仓偏差
+    shortExitDev = 0.8  # 平仓偏差
+    shortTrailingPrcnt = 1.2  # 移动止损百分比
+    shortMaLength = 60  # 过滤用均线窗口
 
 
     # 公共策略变量
@@ -91,7 +91,7 @@ class BollingerBotAG1912Strategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
         """"""
-        super(BollingerBotAG1912Strategy, self).__init__(
+        super(BollingerBotAP001Strategy, self).__init__(
             cta_engine, strategy_name, vt_symbol, setting
         )
 
