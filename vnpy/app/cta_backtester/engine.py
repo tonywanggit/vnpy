@@ -96,7 +96,11 @@ class BacktesterEngine(BaseEngine):
                 if filename.endswith(".py"):
                     strategy_module_name = ".".join(
                         [module_name, filename.replace(".py", "")])
-                    self.load_strategy_class_from_module(strategy_module_name)
+                elif filename.endswith(".pyd"):
+                    strategy_module_name = ".".join(
+                        [module_name, filename.split(".")[0]])
+
+                self.load_strategy_class_from_module(strategy_module_name)
 
     def load_strategy_class_from_module(self, module_name: str):
         """
@@ -352,25 +356,25 @@ class BacktesterEngine(BaseEngine):
 
         contract = self.main_engine.get_contract(vt_symbol)
 
-        # If history data provided in gateway, then query
-        if contract and contract.history_data:
-            data = self.main_engine.query_history(req, contract.gateway_name)
-        # Otherwise use RQData to query data
-        else:
-            try:
+        try:
+            # If history data provided in gateway, then query
+            if contract and contract.history_data:
+                data = self.main_engine.query_history(
+                    req, contract.gateway_name
+                )
+            # Otherwise use RQData to query data
+            else:
                 data = mddata_client.query_history(req)
-            except Exception as ex:
-                print(repr(ex))
-                self.write_log(f"{symbol}.{exchange.value}合约下载失败：{ex.args}")
-                self.thread = None
-                return
 
-        if data:
-            self.write_log(f"{vt_symbol}-{interval}历史数据下载完成, 共计：{len(data)}")
-            database_manager.save_bar_data(data)
-            self.write_log(f"{vt_symbol}-{interval}历史数据保存成功")
-        else:
-            self.write_log(f"数据下载失败，无法获取{vt_symbol}的历史数据")
+            if data:
+                self.write_log(f"{vt_symbol}-{interval}历史数据下载完成, 共计：{len(data)}")
+                database_manager.save_bar_data(data)
+                self.write_log(f"{vt_symbol}-{interval}历史数据下载完成")
+            else:
+                self.write_log(f"数据下载失败，无法获取{vt_symbol}的历史数据")
+        except Exception:
+            msg = f"数据下载失败，触发异常：\n{traceback.format_exc()}"
+            self.write_log(msg)
 
         # Clear thread object handler.
         self.thread = None
