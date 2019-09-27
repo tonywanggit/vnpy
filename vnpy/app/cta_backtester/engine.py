@@ -369,7 +369,7 @@ class BacktesterEngine(BaseEngine):
             if data:
                 self.write_log(f"{vt_symbol}-{interval}历史数据下载完成, 共计：{len(data)}")
                 database_manager.save_bar_data(data)
-                self.write_log(f"{vt_symbol}-{interval}历史数据下载完成")
+                self.write_log(f"{vt_symbol}-{interval}数据保存成功！")
             else:
                 self.write_log(f"数据下载失败，无法获取{vt_symbol}的历史数据")
         except Exception:
