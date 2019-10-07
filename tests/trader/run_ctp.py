@@ -1,8 +1,9 @@
-from app.risk_manager import RiskManagerApp
-from vnpy.app.algo_trading import AlgoTradingApp
+from vnpy.trader.database import database_manager
+from vnpy.trader.database import investment_database_manager
 from vnpy.app.cta_backtester import CtaBacktesterApp
 from vnpy.app.cta_strategy import CtaStrategyApp
-from vnpy.app.data_recorder import DataRecorderApp
+from vnpy.app.investment_manager import InvestmentManagerApp
+from vnpy.app.risk_manager import RiskManagerApp
 from vnpy.app.spread_trading import SpreadTradingApp
 from vnpy.event import EventEngine
 from vnpy.gateway.ctp import CtpGateway
@@ -27,9 +28,10 @@ def main():
     main_engine.add_app(CtaBacktesterApp)
     main_engine.add_app(SpreadTradingApp)
     # main_engine.add_app(CsvLoaderApp)
-    main_engine.add_app(AlgoTradingApp)
-    main_engine.add_app(DataRecorderApp)
+    # main_engine.add_app(AlgoTradingApp)
+    # main_engine.add_app(DataRecorderApp)
     main_engine.add_app(RiskManagerApp)
+    main_engine.add_app(InvestmentManagerApp)
 
     main_window = MainWindow(main_engine, event_engine)
     main_window.showMaximized()

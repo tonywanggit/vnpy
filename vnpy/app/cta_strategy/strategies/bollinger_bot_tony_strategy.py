@@ -5,15 +5,15 @@
 """
 
 from vnpy.app.cta_strategy import (
-    CtaTemplate,
     BarGenerator,
     ArrayManager,
     BarData,
     TickData
 )
+from vnpy.app.investment_manager.template import CtaInvestmentTemplate
 
 
-class BollingerBotTonyStrategy(CtaTemplate):
+class BollingerBotTonyStrategy(CtaInvestmentTemplate):
     """基于布林通道的交易策略"""
     author = u'tonywang_efun'
 
@@ -188,6 +188,7 @@ class BollingerBotTonyStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def on_trade(self, trade):
         # 发出状态更新事件
+        self.record_trade(trade, strategy="BollingerBot", send_email=True)
         self.put_event()
 
     # ----------------------------------------------------------------------

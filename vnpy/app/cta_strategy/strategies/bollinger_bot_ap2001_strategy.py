@@ -3,9 +3,8 @@
 """
 基于布林通道的双边交易策略
 """
-
+from vnpy.app.investment_manager.template import CtaInvestmentTemplate
 from vnpy.app.cta_strategy import (
-    CtaTemplate,
     BarGenerator,
     ArrayManager,
     BarData,
@@ -13,7 +12,7 @@ from vnpy.app.cta_strategy import (
 )
 
 
-class BollingerBotAP001Strategy(CtaTemplate):
+class BollingerBotAP001Strategy(CtaInvestmentTemplate):
     """基于布林通道的交易策略"""
     author = u'tonywang_efun'
 
@@ -208,8 +207,8 @@ class BollingerBotAP001Strategy(CtaTemplate):
     def on_trade(self, trade):
         # 发出状态更新事件
 
-        print(trade)
-        self.send_email(str(trade))
+        self.record_trade(trade, "BollingerBot", True) # 记录交易数据并分析投资情况
+
         self.posPrice = trade.price
         self.put_event()
 
