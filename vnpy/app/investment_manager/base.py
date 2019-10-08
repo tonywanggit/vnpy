@@ -22,6 +22,18 @@ class CommissionUnit(Enum):
     RATIO = "RATIO"
 
 
+class InvestmentInterval(Enum):
+    """
+    投资周期
+    """
+    CurrentMonth = "当月"
+    PreMonth = "上个月"
+    Today = "今天"
+    Yesterday = "昨天"
+    NearlyMonth = "近一个月"
+    NearlyWeek = "近一个周"
+
+
 @dataclass
 class ProductData:
     """期货品种"""
@@ -49,11 +61,11 @@ class InvestmentData:
     open_price: float = None
     finish_price: float = None
 
-    money_lock: float = None        # 资金占用
-    profit: float = None            # 毛利润
-    cost_fee: float = None          # 手续费
-    net_profit: float = None        # 净利润 = 毛利润 - 手续费
-    profit_rate: float = None       # 利润率 = 净利润
+    money_lock: float = None  # 资金占用
+    profit: float = None  # 毛利润
+    cost_fee: float = None  # 手续费
+    net_profit: float = None  # 净利润 = 毛利润 - 手续费
+    profit_rate: float = None  # 利润率 = 净利润
 
     state: InvestmentState = InvestmentState.PROGRESSING
     strategy: str = None

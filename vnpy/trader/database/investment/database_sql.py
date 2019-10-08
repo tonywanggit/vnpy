@@ -2,7 +2,7 @@
 # @Time    : 2019/9/29 8:46
 # @Author  : Tony
 """投资管理的数据库SQL实现"""
-from datetime import datetime, timedelta
+from datetime import datetime
 from peewee import (
     AutoField,
     CharField,
@@ -255,14 +255,14 @@ class InvestmentSqlManager(InvestmentDatabaseManager):
         investment = self.class_investment.from_investment(data)
         self.class_investment.save_one(investment)
 
-    def get_investment(self, symbol: str, exchange: Exchange, engine_type: str) -> InvestmentData:
+    def get_investment(self, symbol: str, exchange: Exchange, engine_type: str, start_time: datetime) -> InvestmentData:
         s = (
             self.class_investment.select().where(
                 (self.class_investment.symbol == symbol)
                 & (self.class_investment.exchange == exchange.value)
                 & (self.class_investment.engine_type == engine_type)
                 & (self.class_investment.state == InvestmentState.PROGRESSING.value)
-                & (self.class_investment.start_datetime > datetime.now() - timedelta(days=60))
+                & (self.class_investment.start_datetime > start_time)
             ).order_by(self.class_investment.start_datetime.asc()).limit(1)
         )
 

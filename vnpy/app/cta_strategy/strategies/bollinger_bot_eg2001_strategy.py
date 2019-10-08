@@ -19,7 +19,7 @@ class BollingerBotEG2001Strategy(CtaTemplate):
     author = u'tonywang_efun'
 
     # 策略参数
-    initDays = 10        # 初始化数据所用的天数
+    initDays = 20        # 初始化数据所用的天数
     fixedSize = 1       # 每次交易的数量
 
     fixWinPrcnt = 1.2   # 固定止盈

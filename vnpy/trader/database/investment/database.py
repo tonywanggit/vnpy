@@ -4,6 +4,7 @@
 """投资管理数据库接口"""
 from abc import ABC, abstractmethod
 
+from datetime import datetime
 from typing import Sequence, TYPE_CHECKING
 
 from vnpy.trader.constant import Exchange
@@ -23,7 +24,8 @@ class InvestmentDatabaseManager(ABC):
         pass
 
     @abstractmethod
-    def get_investment(self, symbol:str, exchange:Exchange, engine_type:str) -> "InvestmentData":
+    def get_investment(self, symbol: str, exchange: Exchange, engine_type: str,
+                       start_time: datetime) -> "InvestmentData":
         pass
 
     @abstractmethod
@@ -39,5 +41,5 @@ class InvestmentDatabaseManager(ABC):
         pass
 
     @abstractmethod
-    def get_product(self, product_code:str, exchange:Exchange) -> "ProductData":
+    def get_product(self, product_code: str, exchange: Exchange) -> "ProductData":
         pass

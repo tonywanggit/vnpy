@@ -19,7 +19,7 @@ class BollingerBotTonyStrategy(CtaInvestmentTemplate):
 
     # 策略参数
     fixedSize = 2  # 每次交易的数量
-    initDays = 4  # 初始化数据所用的天数
+    initDays = 20  # 初始化数据所用的天数
 
     # （多头参数）
     bollLength = 46  # 通道窗口数

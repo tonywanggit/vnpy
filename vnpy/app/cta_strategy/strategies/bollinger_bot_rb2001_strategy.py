@@ -18,8 +18,8 @@ class BollingerBotRB2001Strategy(CtaTemplate):
     author = u'tonywang_efun'
 
     # 策略参数
+    initDays = 20  # 初始化数据所用的天数
     fixedSize = 2  # 每次交易的数量
-    initDays = 4  # 初始化数据所用的天数
 
     # （多头参数）
     bollLength = 60  # 通道窗口数

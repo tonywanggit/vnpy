@@ -2,7 +2,7 @@
 # @Time    : 2019/10/1 16:11
 # @Author  : Tony
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from vnpy.app.cta_strategy import CtaTemplate
 from vnpy.app.cta_strategy.base import EngineType
@@ -40,6 +40,7 @@ class CtaInvestmentTemplate(CtaTemplate):
         记录交易数据
         """
         trade_data_ext = TradeDataExt.from_trade_data(trade)
+        trade_data_ext.product_code = self.get_product_code(trade.symbol)
         trade_data_ext.strategy = strategy
         trade_data_ext.engine_type = self.get_engine_type()
 
@@ -58,7 +59,6 @@ class CtaInvestmentTemplate(CtaTemplate):
 
     def process_record_trade(self, event: Event):
         trade_data: TradeDataExt = event.data
-        trade_data.product_code = self.get_product_code(trade_data.symbol)
         trade_id = investment_database_manager.save_trade_data(trade_data)
 
         if trade_data.offset == Offset.OPEN:
@@ -87,8 +87,14 @@ class CtaInvestmentTemplate(CtaTemplate):
         pass
 
     def finish_investment(self, trade: TradeDataExt, trade_id: int):
-        investment = investment_database_manager.get_investment(trade.symbol, trade.exchange, trade.engine_type.value)
-        if investment is None: return
+        # 回测的开始时间可能比较长支持10年，实盘100天足够了（基本投资都关闭了）
+        start_time = datetime.now() - timedelta(days=100) if trade.engine_type == EngineType.LIVE \
+            else datetime.now() - timedelta(days=3650)
+        investment = investment_database_manager.get_investment(trade.symbol, trade.exchange, trade.engine_type.value,
+                                                                start_time)
+        if investment is None:
+            print(f"找不到需要关闭的投资记录：{trade}")
+            return
 
         investment.close_trade_ids = [trade_id]
         investment.end_datetime = trade.datetime
