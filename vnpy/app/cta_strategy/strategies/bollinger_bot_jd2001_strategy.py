@@ -5,15 +5,15 @@
 """
 
 from vnpy.app.cta_strategy import (
-    CtaTemplate,
     BarGenerator,
     ArrayManager,
     BarData,
     TickData
 )
+from vnpy.app.investment_manager.template import CtaInvestmentTemplate
 
 
-class BollingerBotJD2001Strategy(CtaTemplate):
+class BollingerBotJD2001Strategy(CtaInvestmentTemplate):
     """基于布林通道的交易策略"""
     author = u'tonywang_efun'
 
@@ -187,7 +187,9 @@ class BollingerBotJD2001Strategy(CtaTemplate):
 
     # ----------------------------------------------------------------------
     def on_trade(self, trade):
-        # 发出状态更新事件
+        # 记录交易数据并分析投资情况
+        self.record_trade(trade, "BollingerBot", True)
+
         self.put_event()
 
     # ----------------------------------------------------------------------

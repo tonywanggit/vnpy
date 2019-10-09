@@ -3,14 +3,13 @@
 """
 基于布林通道的双边交易策略
 """
-from vnpy.app.investment_manager.template import CtaInvestmentTemplate
 from vnpy.app.cta_strategy import (
-    CtaTemplate,
     BarGenerator,
     ArrayManager,
     BarData,
     TickData
 )
+from vnpy.app.investment_manager.template import CtaInvestmentTemplate
 
 
 class BollingerBotRB2001Strategy(CtaInvestmentTemplate):

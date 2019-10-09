@@ -29,7 +29,7 @@ class CtaInvestmentTemplate(CtaTemplate):
             cta_engine, strategy_name, vt_symbol, setting
         )
 
-        if CtaInvestmentTemplate.start_event_engine == False:
+        if not CtaInvestmentTemplate.start_event_engine:
             CtaInvestmentTemplate.start_event_engine = True
             CtaInvestmentTemplate.investment_event_engine.register(EVENT_RECORD_TRADE, self.process_record_trade)
             CtaInvestmentTemplate.investment_event_engine.register(EVENT_SEND_EMAIL, self.process_send_email)
@@ -129,6 +129,7 @@ class CtaInvestmentTemplate(CtaTemplate):
         trade_data: TradeDataExt = event.data
         self.send_email(str(trade_data))
 
-    def get_product_code(self, symbol: str):
+    @staticmethod
+    def get_product_code(symbol: str):
         matchObj = re.match(r'([a-zA-Z]+)', symbol, re.M | re.I)
         return matchObj.group(1).upper()

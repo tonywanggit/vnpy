@@ -3,13 +3,13 @@
 """
 基于布林通道的双边交易策略
 """
-from vnpy.app.investment_manager.template import CtaInvestmentTemplate
 from vnpy.app.cta_strategy import (
     BarGenerator,
     ArrayManager,
     BarData,
     TickData
 )
+from vnpy.app.investment_manager.template import CtaInvestmentTemplate
 
 
 class BollingerBotAP001Strategy(CtaInvestmentTemplate):
@@ -21,7 +21,7 @@ class BollingerBotAP001Strategy(CtaInvestmentTemplate):
     fixedSize = 1  # 每次交易的数量
 
     # （多头参数）
-    fixWinPrcnt = 2.4   # 固定止盈百分比
+    fixWinPrcnt = 2.4  # 固定止盈百分比
     bollLength = 58  # 通道窗口数
     entryDev = 2.6  # 开仓偏差
     exitDev = 1.2  # 平仓偏差
@@ -29,16 +29,15 @@ class BollingerBotAP001Strategy(CtaInvestmentTemplate):
     maLength = 12  # 过滤用均线窗口
 
     # （空头参数）
-    shortfixWinPrcnt = 2.9   # 固定止盈百分比
+    shortfixWinPrcnt = 2.9  # 固定止盈百分比
     shortBollLength = 26  # 通道窗口数
     shortEntryDev = 2.4  # 开仓偏差
     shortExitDev = 0.8  # 平仓偏差
     shortTrailingPrcnt = 1.2  # 移动止损百分比
     shortMaLength = 60  # 过滤用均线窗口
 
-
     # 公共策略变量
-    posPrice = 0    # 持仓价
+    posPrice = 0  # 持仓价
 
     # 策略变量(多头)
     entryLine = 0  # 开仓上轨
