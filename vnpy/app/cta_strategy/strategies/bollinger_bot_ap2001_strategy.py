@@ -205,9 +205,9 @@ class BollingerBotAP001Strategy(CtaInvestmentTemplate):
 
     # ----------------------------------------------------------------------
     def on_trade(self, trade):
-        # 发出状态更新事件
 
-        self.record_trade(trade, "BollingerBot", True) # 记录交易数据并分析投资情况
+        # 记录交易数据并分析投资情况
+        self.record_trade(trade, "BollingerBot", True)
 
         self.posPrice = trade.price
         self.put_event()
