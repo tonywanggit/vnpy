@@ -1,5 +1,3 @@
-from vnpy.trader.database import database_manager
-from vnpy.trader.database import investment_database_manager
 from vnpy.app.cta_backtester import CtaBacktesterApp
 from vnpy.app.cta_strategy import CtaStrategyApp
 from vnpy.app.investment_manager import InvestmentManagerApp

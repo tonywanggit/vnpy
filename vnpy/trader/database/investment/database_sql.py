@@ -13,8 +13,9 @@ from peewee import (
 from typing import Sequence, Type
 
 from vnpy.app.cta_strategy.base import EngineType
-from vnpy.app.investment_manager.base import TradeDataExt, InvestmentData, ProductData, CommissionUnit, InvestmentState
-from vnpy.trader.constant import Exchange, Direction
+from vnpy.trader.constant import Exchange, Direction, Offset
+from vnpy.trader.database.investment.base import TradeDataExt, InvestmentData, ProductData, CommissionUnit, \
+    InvestmentState
 from .database import InvestmentDatabaseManager
 from ..database import Driver
 from ..database_sql import ModelBase, init_mysql, init_sqlite, init_postgresql
@@ -77,6 +78,23 @@ def init_models(db: Database, driver: Driver):
 
             return db_trade
 
+        def to_trade(self):
+            trade = TradeDataExt(
+                id=self.id,
+                product_code=self.product_code,
+                symbol=self.symbol,
+                exchange=Exchange(self.exchange),
+                datetime=self.datetime,
+                direction=Direction(self.direction),
+                offset=Offset(self.offset),
+                price=self.price,
+                volume=self.volume,
+                rest_volume=self.rest_volume,
+                strategy=self.strategy,
+                engine_type=EngineType(self.engine_type)
+            )
+            return trade
+
         @staticmethod
         def save_one(product: "DbTradeData") -> int:
             record = product.to_dict()
@@ -96,6 +114,7 @@ def init_models(db: Database, driver: Driver):
 
         direction: str = CharField()
         volume: float = FloatField()
+        close_volume: float = FloatField()
 
         open_price: float = FloatField()
         finish_price: float = FloatField(null=True)  # 多笔平仓价的均价
@@ -128,6 +147,7 @@ def init_models(db: Database, driver: Driver):
             db_investment.open_price = investment.open_price
             db_investment.finish_price = investment.finish_price
             db_investment.volume = investment.volume
+            db_investment.close_volume = investment.close_volume
             db_investment.direction = investment.direction.value
 
             db_investment.money_lock = investment.money_lock
@@ -156,6 +176,7 @@ def init_models(db: Database, driver: Driver):
                 open_price=self.open_price,
                 finish_price=self.finish_price,
                 volume=self.volume,
+                close_volume=self.close_volume,
                 direction=Direction(self.direction),
 
                 money_lock=self.money_lock,
@@ -258,7 +279,7 @@ class InvestmentSqlManager(InvestmentDatabaseManager):
     def get_investment(self, symbol: str, exchange: Exchange, engine_type: str, start_time: datetime) -> InvestmentData:
         s = (
             self.class_investment.select().where(
-                (self.class_investment.symbol == symbol)
+                ((self.class_investment.symbol == symbol) | (symbol is None))
                 & (self.class_investment.exchange == exchange.value)
                 & (self.class_investment.engine_type == engine_type)
                 & (self.class_investment.state == InvestmentState.PROGRESSING.value)
@@ -283,5 +304,9 @@ class InvestmentSqlManager(InvestmentDatabaseManager):
 
     def get_product(self, product_code: str, exchange: Exchange) -> "ProductData":
         s = (self.class_product.select().where((self.class_product.product_code == product_code)
-             & (self.class_product.exchange == exchange.value)))
+                                               & (self.class_product.exchange == exchange.value)))
         return s[0].to_product() if s is not None and len(s) > 0 else None
+
+    def get_trade_data(self, trade_id: int) -> "TradeDataExt":
+        s = (self.class_trade.select().where((self.class_trade.id == trade_id)))
+        return s[0].to_trade() if s is not None and len(s) > 0 else None

@@ -58,6 +58,7 @@ class InvestmentData:
     end_datetime: datetime = None
     direction: Direction = None
     volume: float = None
+    close_volume: float = None
     open_price: float = None
     finish_price: float = None
 
@@ -82,6 +83,7 @@ class TradeDataExt(TradeData):
     product_code: str = None
     strategy: str = None
     engine_type: EngineType = None
+    rest_volume: int = 0
 
     @staticmethod
     def from_trade_data(td: TradeData) -> "TradeDataExt":

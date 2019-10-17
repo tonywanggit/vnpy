@@ -10,13 +10,17 @@ from typing import Sequence, TYPE_CHECKING
 from vnpy.trader.constant import Exchange
 
 if TYPE_CHECKING:
-    from vnpy.app.investment_manager.base import TradeDataExt, InvestmentData, ProductData  # noqa
+    from vnpy.trader.database.investment.base import TradeDataExt, InvestmentData, ProductData  # noqa
 
 
 class InvestmentDatabaseManager(ABC):
 
     @abstractmethod
     def save_trade_data(self, data: "TradeDataExt") -> int:
+        pass
+
+    @abstractmethod
+    def get_trade_data(self, trade_id: int) -> "TradeDataExt":
         pass
 
     @abstractmethod

@@ -8,7 +8,7 @@ import re
 from vnpy.app.cta_strategy.base import EngineType
 from vnpy.trader.constant import Exchange
 from vnpy.trader.database import investment_database_manager
-from vnpy.app.investment_manager.base import CommissionUnit, ProductData
+from vnpy.trader.database.investment.base import CommissionUnit, ProductData
 
 # from vnpy.trader.constant import Exchange
 

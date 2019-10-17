@@ -2,17 +2,18 @@ import numpy as np
 import pyqtgraph as pg
 from datetime import datetime, timedelta
 
-from vnpy.app.investment_manager.base import InvestmentInterval
+from vnpy.trader.database.investment.base import InvestmentInterval
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import MainEngine
 from vnpy.trader.ui import QtCore, QtWidgets
+from vnpy.trader.ui.widget import BaseMonitor, BaseCell, EnumCell, DirectionCell
 from ..engine import (
     APP_NAME,
     EVENT_INVESTMENT_LOG
 )
 
 
-class InvestmentManager(QtWidgets.QDialog):
+class InvestmentManager(QtWidgets.QWidget):
     """"""
 
     signal_log = QtCore.pyqtSignal(Event)
@@ -23,10 +24,7 @@ class InvestmentManager(QtWidgets.QDialog):
 
         self.main_engine = main_engine
         self.event_engine = event_engine
-
         self.investment_engine = main_engine.get_engine(APP_NAME)
-
-        self.target_display = ""
 
         self.init_ui()
         self.register_event()
@@ -57,19 +55,22 @@ class InvestmentManager(QtWidgets.QDialog):
         self.capital_line = QtWidgets.QLineEdit("30000")
 
         analyze_button = QtWidgets.QPushButton("开始统计")
-        analyze_button.clicked.connect(self.start_backtesting)
+        analyze_button.clicked.connect(self.start_analyzing)
+
+        candle_button = QtWidgets.QPushButton("K线图表")
+        candle_button.clicked.connect(self.show_candle_chart)
 
         product_manage_button = QtWidgets.QPushButton("品种维护")
         product_manage_button.clicked.connect(self.start_optimization)
 
-        candle_button = QtWidgets.QPushButton("K线图表")
-        candle_button.clicked.connect(self.show_candle_chart)
-        candle_button.setEnabled(False)
+        clean_backtester_button = QtWidgets.QPushButton("清空回测")
+        clean_backtester_button.clicked.connect(self.start_optimization)
 
         for button in [
             analyze_button,
             product_manage_button,
-            candle_button
+            candle_button,
+            clean_backtester_button
         ]:
             button.setFixedHeight(button.sizeHint().height() * 2)
 
@@ -83,27 +84,40 @@ class InvestmentManager(QtWidgets.QDialog):
         left_vbox.addLayout(form)
         left_vbox.addWidget(analyze_button)
         left_vbox.addWidget(candle_button)
+        left_vbox.addStretch()
         left_vbox.addWidget(product_manage_button)
+        left_vbox.addWidget(clean_backtester_button)
+        left_vbox.addStretch()
 
         # Result part
         self.statistics_monitor = StatisticsMonitor()
+        self.statistics_monitor.setMaximumHeight(310)
 
-        self.log_monitor = QtWidgets.QTextEdit()
-        self.log_monitor.setMaximumHeight(400)
+        self.investment_table = InvestmentTableMonitor(self.main_engine, self.event_engine)
+        self.investment_table.setMinimumWidth(1550)
+        # self.log_monitor.setMaximumHeight(900)
 
         self.chart = InvestmentChart()
-        self.chart.setMinimumWidth(1000)
+        self.chart.setMinimumWidth(1200)
+        self.chart.setMaximumHeight(310)
 
         # Layout
+        center_top_hbox = QtWidgets.QHBoxLayout()
+        center_top_hbox.addWidget(self.statistics_monitor)
+        center_top_hbox.addWidget(self.chart)
+
         center_vbox = QtWidgets.QVBoxLayout()
-        center_vbox.addWidget(self.statistics_monitor)
-        center_vbox.addWidget(self.log_monitor)
+        center_vbox.addLayout(center_top_hbox)
+        center_vbox.addWidget(self.investment_table)
 
         hbox = QtWidgets.QHBoxLayout()
         hbox.addLayout(left_vbox)
         hbox.addLayout(center_vbox)
-        hbox.addWidget(self.chart)
         self.setLayout(hbox)
+
+    def show(self):
+        """"""
+        self.showMaximized()
 
     def register_event(self):
         """"""
@@ -119,11 +133,13 @@ class InvestmentManager(QtWidgets.QDialog):
         """"""
         timestamp = datetime.now().strftime("%H:%M:%S")
         msg = f"{timestamp}\t{msg}"
-        self.log_monitor.append(msg)
+        self.investment_table.append(msg)
 
+    def start_analyzing(self):
+        """开始分析投资数据"""
 
-    def start_backtesting(self):
-        """"""
+        investment_data = self.investment_engine.load_investment_data(self.start_date_edit.date())
+        self.investment_table.update_data(investment_data)
         pass
 
     def start_optimization(self):
@@ -255,47 +271,47 @@ class InvestmentChart(pg.GraphicsWindow):
             title="账户净值",
             axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
         )
-        self.nextRow()
+        # self.nextRow()
 
-        self.drawdown_plot = self.addPlot(
-            title="净值回撤",
-            axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
-        )
-        self.nextRow()
-
-        self.pnl_plot = self.addPlot(
-            title="每日盈亏",
-            axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
-        )
-        self.nextRow()
-
-        self.distribution_plot = self.addPlot(title="盈亏分布")
+        # self.drawdown_plot = self.addPlot(
+        #     title="净值回撤",
+        #     axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
+        # )
+        # self.nextRow()
+        #
+        # self.pnl_plot = self.addPlot(
+        #     title="每日盈亏",
+        #     axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
+        # )
+        # self.nextRow()
+        #
+        # self.distribution_plot = self.addPlot(title="盈亏分布")
 
         # Add curves and bars on plot widgets
         self.balance_curve = self.balance_plot.plot(
             pen=pg.mkPen("#ffc107", width=3)
         )
 
-        dd_color = "#303f9f"
-        self.drawdown_curve = self.drawdown_plot.plot(
-            fillLevel=-0.3, brush=dd_color, pen=dd_color
-        )
+        # dd_color = "#303f9f"
+        # self.drawdown_curve = self.drawdown_plot.plot(
+        #     fillLevel=-0.3, brush=dd_color, pen=dd_color
+        # )
+        #
+        # profit_color = 'r'
+        # loss_color = 'g'
+        # self.profit_pnl_bar = pg.BarGraphItem(
+        #     x=[], height=[], width=0.3, brush=profit_color, pen=profit_color
+        # )
+        # self.loss_pnl_bar = pg.BarGraphItem(
+        #     x=[], height=[], width=0.3, brush=loss_color, pen=loss_color
+        # )
+        # self.pnl_plot.addItem(self.profit_pnl_bar)
+        # self.pnl_plot.addItem(self.loss_pnl_bar)
 
-        profit_color = 'r'
-        loss_color = 'g'
-        self.profit_pnl_bar = pg.BarGraphItem(
-            x=[], height=[], width=0.3, brush=profit_color, pen=profit_color
-        )
-        self.loss_pnl_bar = pg.BarGraphItem(
-            x=[], height=[], width=0.3, brush=loss_color, pen=loss_color
-        )
-        self.pnl_plot.addItem(self.profit_pnl_bar)
-        self.pnl_plot.addItem(self.loss_pnl_bar)
-
-        distribution_color = "#6d4c41"
-        self.distribution_curve = self.distribution_plot.plot(
-            fillLevel=-0.3, brush=distribution_color, pen=distribution_color
-        )
+        # distribution_color = "#6d4c41"
+        # self.distribution_curve = self.distribution_plot.plot(
+        #     fillLevel=-0.3, brush=distribution_color, pen=distribution_color
+        # )
 
     def clear_data(self):
         """"""
@@ -358,3 +374,35 @@ class DateAxis(pg.AxisItem):
             dt = self.dates.get(v, "")
             strings.append(str(dt))
         return strings
+
+
+class InvestmentTableMonitor(BaseMonitor):
+    """
+    投资记录列表
+    """
+
+    data_key = "id"
+    sorting = True
+
+    headers = {
+        "symbol": {"display": "代码", "cell": BaseCell, "update": False},
+        "exchange": {"display": "交易所", "cell": EnumCell, "update": False},
+        "direction": {"display": "开仓方向", "cell": DirectionCell, "update": False},
+        "open_price": {"display": "开仓价格", "cell": BaseCell, "update": False},
+        "finish_price": {"display": "结束均价", "cell": BaseCell, "update": False},
+        "volume": {"display": "数量", "cell": BaseCell, "update": False},
+        "start_time": {"display": "开仓时间", "cell": BaseCell, "update": False},
+        "end_time": {"display": "结束时间", "cell": BaseCell, "update": False},
+        "money_lock": {"display": "资金占用", "cell": BaseCell, "update": False},
+        "profit": {"display": "毛利", "cell": BaseCell, "update": False},
+        "cost_fee": {"display": "手续费", "cell": BaseCell, "update": False},
+        "net_profit": {"display": "净利", "cell": BaseCell, "update": False},
+        "profit_rate": {"display": "净利率", "cell": BaseCell, "update": False},
+        "state": {"display": "投资状态", "cell": BaseCell, "update": False},
+        "strategy": {"display": "投资策略", "cell": BaseCell, "update": False},
+    }
+
+    def update_data(self, data: list):
+        # data.reverse()
+        for obj in data:
+            self.table.insert_new_row(obj)
