@@ -10,7 +10,7 @@ from typing import Sequence, TYPE_CHECKING
 from vnpy.trader.constant import Exchange
 
 if TYPE_CHECKING:
-    from vnpy.trader.database.investment.base import TradeDataExt, InvestmentData, ProductData  # noqa
+    from vnpy.trader.database.investment.base import TradeDataExt, InvestmentData, ProductData, InvestmentState  # noqa
 
 
 class InvestmentDatabaseManager(ABC):
@@ -30,6 +30,11 @@ class InvestmentDatabaseManager(ABC):
     @abstractmethod
     def get_investment(self, symbol: str, exchange: Exchange, engine_type: str,
                        start_time: datetime) -> "InvestmentData":
+        pass
+
+    @abstractmethod
+    def load_investment(self, strategy: str, symbol: str, engine_type: str, start_time: datetime,
+                        investment_state: "InvestmentState") -> Sequence["InvestmentData"]:
         pass
 
     @abstractmethod

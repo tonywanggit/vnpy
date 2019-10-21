@@ -1,12 +1,13 @@
 import numpy as np
 import pyqtgraph as pg
+from PyQt5.QtWidgets import QHeaderView
 from datetime import datetime, timedelta
 
-from vnpy.trader.database.investment.base import InvestmentInterval
 from vnpy.event import Event, EventEngine
+from vnpy.trader.database.investment.base import InvestmentInterval
 from vnpy.trader.engine import MainEngine
 from vnpy.trader.ui import QtCore, QtWidgets
-from vnpy.trader.ui.widget import BaseMonitor, BaseCell, EnumCell, DirectionCell
+from vnpy.trader.ui.widget import BaseMonitor, BaseCell, EnumCell, DirectionCell, DateTimeCell
 from ..engine import (
     APP_NAME,
     EVENT_INVESTMENT_LOG
@@ -53,6 +54,8 @@ class InvestmentManager(QtWidgets.QWidget):
         )
 
         self.capital_line = QtWidgets.QLineEdit("30000")
+        self.strategy_edit = QtWidgets.QLineEdit("")
+        self.symbol_edit = QtWidgets.QLineEdit("")
 
         analyze_button = QtWidgets.QPushButton("开始统计")
         analyze_button.clicked.connect(self.start_analyzing)
@@ -76,9 +79,11 @@ class InvestmentManager(QtWidgets.QWidget):
 
         form = QtWidgets.QFormLayout()
         form.addRow("投资周期", self.interval_combo)
+        form.addRow("投资策略", self.strategy_edit)
+        form.addRow("投资品种", self.symbol_edit)
+        form.addRow("投资金额", self.capital_line)
         form.addRow("开始日期", self.start_date_edit)
         form.addRow("结束日期", self.end_date_edit)
-        form.addRow("投资金额", self.capital_line)
 
         left_vbox = QtWidgets.QVBoxLayout()
         left_vbox.addLayout(form)
@@ -138,8 +143,15 @@ class InvestmentManager(QtWidgets.QWidget):
     def start_analyzing(self):
         """开始分析投资数据"""
 
-        investment_data = self.investment_engine.load_investment_data(self.start_date_edit.date())
+        investment_data = self.investment_engine.load_investment_data(self.start_date_edit.date().toPyDate(),
+                                                                      self.strategy_edit.text(),
+                                                                      self.symbol_edit.text())
+        self.investment_table.clear_data()
         self.investment_table.update_data(investment_data)
+        self.investment_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.investment_table.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        self.investment_table.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+        # self.investment_table.resize_columns()
         pass
 
     def start_optimization(self):
@@ -391,18 +403,22 @@ class InvestmentTableMonitor(BaseMonitor):
         "open_price": {"display": "开仓价格", "cell": BaseCell, "update": False},
         "finish_price": {"display": "结束均价", "cell": BaseCell, "update": False},
         "volume": {"display": "数量", "cell": BaseCell, "update": False},
-        "start_time": {"display": "开仓时间", "cell": BaseCell, "update": False},
-        "end_time": {"display": "结束时间", "cell": BaseCell, "update": False},
+        "start_datetime": {"display": "开仓时间", "cell": DateTimeCell, "update": False},
+        "end_datetime": {"display": "结束时间", "cell": DateTimeCell, "update": False},
         "money_lock": {"display": "资金占用", "cell": BaseCell, "update": False},
         "profit": {"display": "毛利", "cell": BaseCell, "update": False},
         "cost_fee": {"display": "手续费", "cell": BaseCell, "update": False},
         "net_profit": {"display": "净利", "cell": BaseCell, "update": False},
         "profit_rate": {"display": "净利率", "cell": BaseCell, "update": False},
-        "state": {"display": "投资状态", "cell": BaseCell, "update": False},
+        "state": {"display": "投资状态", "cell": EnumCell, "update": False},
         "strategy": {"display": "投资策略", "cell": BaseCell, "update": False},
     }
 
     def update_data(self, data: list):
-        # data.reverse()
+        data.reverse()
         for obj in data:
-            self.table.insert_new_row(obj)
+            self.insert_new_row(obj)
+
+    def clear_data(self):
+        """"""
+        self.setRowCount(0)

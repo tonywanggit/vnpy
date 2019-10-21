@@ -74,6 +74,9 @@ class InvestmentData:
     close_trade_ids: list = field(default_factory=list)
     engine_type: EngineType = None
 
+    def __post_init__(self):
+        """"""
+        self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
 
 @dataclass
 class TradeDataExt(TradeData):

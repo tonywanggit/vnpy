@@ -8,6 +8,7 @@ from vnpy.app.cta_strategy.base import EngineType
 from vnpy.event import EventEngine
 from vnpy.trader.constant import Exchange
 from vnpy.trader.database import investment_database_manager
+from vnpy.trader.database.investment.base import InvestmentState
 from vnpy.trader.engine import BaseEngine, MainEngine
 
 APP_NAME = "InvestmentManager"
@@ -21,6 +22,7 @@ class InvestmentManagerEngine(BaseEngine):
         """"""
         super().__init__(main_engine, event_engine, APP_NAME)
 
-    def load_investment_data(self, start_time: date):
+    def load_investment_data(self, start_time: date, strategy: str, symbol: str):
         """加载投资数据"""
-        return investment_database_manager.get_investment(None, Exchange.SHFE, EngineType.LIVE.value, start_time)
+        return investment_database_manager.load_investment(strategy, symbol, EngineType.LIVE.value, start_time,
+                                                           InvestmentState.FINISHED)

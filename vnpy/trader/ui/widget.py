@@ -3,11 +3,11 @@ Basic widgets for VN Trader.
 """
 
 import csv
-from enum import Enum
-from typing import Any
 from copy import copy
+from enum import Enum
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from typing import Any
 
 from vnpy.event import Event, EventEngine
 from ..constant import Direction, Exchange, Offset, OrderType
@@ -21,9 +21,8 @@ from ..event import (
     EVENT_LOG
 )
 from ..object import OrderRequest, SubscribeRequest
-from ..utility import load_json, save_json
 from ..setting import SETTING_FILENAME, SETTINGS
-
+from ..utility import load_json, save_json
 
 COLOR_LONG = QtGui.QColor("red")
 COLOR_SHORT = QtGui.QColor("green")
@@ -160,6 +159,32 @@ class TimeCell(BaseCell):
             return
 
         timestamp = content.strftime("%H:%M:%S")
+
+        millisecond = int(content.microsecond / 1000)
+        if millisecond:
+            timestamp = f"{timestamp}.{millisecond}"
+
+        self.setText(timestamp)
+        self._data = data
+
+
+class DateTimeCell(BaseCell):
+    """
+    Cell used for showing time string from datetime object.
+    """
+
+    def __init__(self, content: Any, data: Any):
+        """"""
+        super(DateTimeCell, self).__init__(content, data)
+
+    def set_content(self, content: Any, data: Any):
+        """
+        Time format is 12:12:12.5
+        """
+        if content is None:
+            return
+
+        timestamp = content.strftime("%Y-%m-%d %H:%M:%S")
 
         millisecond = int(content.microsecond / 1000)
         if millisecond:
