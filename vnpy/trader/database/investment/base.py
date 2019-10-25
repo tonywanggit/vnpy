@@ -77,6 +77,7 @@ class InvestmentData:
     def __post_init__(self):
         """"""
         self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
+        self.date = self.start_datetime.date()
 
 @dataclass
 class TradeDataExt(TradeData):
