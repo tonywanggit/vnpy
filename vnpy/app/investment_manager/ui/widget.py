@@ -6,7 +6,7 @@ from vnpy.event import Event, EventEngine
 from vnpy.trader.database.investment.base import InvestmentInterval
 from vnpy.trader.engine import MainEngine
 from vnpy.trader.ui import QtCore, QtWidgets
-from vnpy.trader.ui.widget import BaseMonitor, BaseCell, EnumCell, DirectionCell, DateTimeCell
+from vnpy.trader.ui.widget import BaseMonitor, BaseCell, EnumCell, DirectionCell, DateTimeCell, PnlCell
 from ..engine import (
     APP_NAME,
     EVENT_INVESTMENT_LOG
@@ -142,13 +142,22 @@ class InvestmentManager(QtWidgets.QWidget):
     def start_analyzing(self):
         """开始分析投资数据"""
 
-        investment_data = self.investment_engine.load_investment_data(self.start_date_edit.date().toPyDate(),
+        start_date = self.start_date_edit.date().toPyDate()
+        end_date = self.end_date_edit.date().toPyDate()
+        if end_date <= start_date:
+            QtWidgets.QMessageBox.information(self, "友情提示", "结束日期必须大于开始日期！")
+
+        investment_data = self.investment_engine.load_investment_data(start_date, end_date,
                                                                       self.strategy_edit.text(),
                                                                       self.symbol_edit.text())
         self.investment_table.update_data(investment_data)
 
-        dataframe = self.investment_engine.build_pnl_dataframe(investment_data)
+        dataframe = self.investment_engine.build_pnl_dataframe(start_date, end_date, investment_data)
         self.chart.set_data(dataframe)
+
+        statistics_map = self.investment_engine.build_statistics_map(investment_data)
+        self.statistics_monitor.set_data(statistics_map)
+
         pass
 
     def start_optimization(self):
@@ -171,37 +180,18 @@ class InvestmentManager(QtWidgets.QWidget):
 class StatisticsMonitor(QtWidgets.QTableWidget):
     """"""
     KEY_NAME_MAP = {
-        "start_date": "首个交易日",
-        "end_date": "最后交易日",
+        "start_num": "启动投资笔数",
+        "finish_num": "结束投资笔数",
+        "progressing_num": "进行中投资笔数",
 
-        "total_days": "总交易日",
-        "profit_days": "盈利交易日",
-        "loss_days": "亏损交易日",
+        "profit_num": "盈利笔数",
+        "drawdown_num": "回撤笔数",
+        "max_profit": "单笔最大盈利",
+        "max_drawdown": "单笔最大回撤",
 
-        "capital": "起始资金",
-        "end_balance": "结束资金",
-
-        "total_return": "总收益率",
-        "annual_return": "年化收益",
-        "max_drawdown": "最大回撤",
-        "max_ddpercent": "百分比最大回撤",
-
+        "total_money_lock": "资金占用",
         "total_net_pnl": "总盈亏",
-        "total_commission": "总手续费",
-        "total_slippage": "总滑点",
-        "total_turnover": "总成交额",
-        "total_trade_count": "总成交笔数",
-
-        "daily_net_pnl": "日均盈亏",
-        "daily_commission": "日均手续费",
-        "daily_slippage": "日均滑点",
-        "daily_turnover": "日均成交额",
-        "daily_trade_count": "日均成交笔数",
-
-        "daily_return": "日均收益率",
-        "return_std": "收益标准差",
-        "sharpe_ratio": "夏普比率",
-        "return_drawdown_ratio": "收益回撤比"
+        "total_commission": "总手续费"
     }
 
     def __init__(self):
@@ -236,24 +226,11 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
 
     def set_data(self, data: dict):
         """"""
-        data["capital"] = f"{data['capital']:,.2f}"
-        data["end_balance"] = f"{data['end_balance']:,.2f}"
-        data["total_return"] = f"{data['total_return']:,.2f}%"
-        data["annual_return"] = f"{data['annual_return']:,.2f}%"
-        data["max_drawdown"] = f"{data['max_drawdown']:,.2f}"
-        data["max_ddpercent"] = f"{data['max_ddpercent']:,.2f}%"
+        data["total_money_lock"] = f"{data['total_money_lock']:,.2f}"
         data["total_net_pnl"] = f"{data['total_net_pnl']:,.2f}"
         data["total_commission"] = f"{data['total_commission']:,.2f}"
-        data["total_slippage"] = f"{data['total_slippage']:,.2f}"
-        data["total_turnover"] = f"{data['total_turnover']:,.2f}"
-        data["daily_net_pnl"] = f"{data['daily_net_pnl']:,.2f}"
-        data["daily_commission"] = f"{data['daily_commission']:,.2f}"
-        data["daily_slippage"] = f"{data['daily_slippage']:,.2f}"
-        data["daily_turnover"] = f"{data['daily_turnover']:,.2f}"
-        data["daily_return"] = f"{data['daily_return']:,.2f}%"
-        data["return_std"] = f"{data['return_std']:,.2f}%"
-        data["sharpe_ratio"] = f"{data['sharpe_ratio']:,.2f}"
-        data["return_drawdown_ratio"] = f"{data['return_drawdown_ratio']:,.2f}"
+        data["max_profit"] = f"{data['max_profit']:,.2f}"
+        data["max_drawdown"] = f"{data['max_drawdown']:,.2f}"
 
         for key, cell in self.cells.items():
             value = data.get(key, "")
@@ -277,17 +254,22 @@ class InvestmentChart(pg.GraphicsWindow):
 
         self.pnl_plot = self.addPlot(
             title="每日盈亏",
-            axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
+            axisItems={"bottom": DateAxis(self.dates, orientation="bottom", maxTickLength=-10)}
         )
 
+        zero_color = 'w'
         profit_color = 'r'
         loss_color = 'g'
+        self.zero_pnl_bar = pg.BarGraphItem(
+            x=[], height=[], width=0.3, brush=zero_color, pen=zero_color
+        )
         self.profit_pnl_bar = pg.BarGraphItem(
             x=[], height=[], width=0.3, brush=profit_color, pen=profit_color
         )
         self.loss_pnl_bar = pg.BarGraphItem(
             x=[], height=[], width=0.3, brush=loss_color, pen=loss_color
         )
+        self.pnl_plot.addItem(self.zero_pnl_bar)
         self.pnl_plot.addItem(self.profit_pnl_bar)
         self.pnl_plot.addItem(self.loss_pnl_bar)
 
@@ -295,6 +277,7 @@ class InvestmentChart(pg.GraphicsWindow):
         """"""
         self.profit_pnl_bar.setOpts(x=[], height=[])
         self.loss_pnl_bar.setOpts(x=[], height=[])
+        self.zero_pnl_bar.setOpts(x=[], height=[])
 
     def set_data(self, df):
         """"""
@@ -308,19 +291,25 @@ class InvestmentChart(pg.GraphicsWindow):
             self.dates[n] = date
 
         # Set data for daily pnl bar
+        zero_pnl_x = []
+        zero_pnl_height = []
         profit_pnl_x = []
         profit_pnl_height = []
         loss_pnl_x = []
         loss_pnl_height = []
 
         for count, pnl in enumerate(df["net_pnl"]):
-            if pnl >= 0:
+            if pnl > 0:
                 profit_pnl_height.append(pnl)
                 profit_pnl_x.append(count)
+            elif pnl == 0:
+                zero_pnl_height.append(pnl)
+                zero_pnl_x.append(count)
             else:
                 loss_pnl_height.append(pnl)
                 loss_pnl_x.append(count)
 
+        self.zero_pnl_bar.setOpts(x=zero_pnl_x, height=zero_pnl_height)
         self.profit_pnl_bar.setOpts(x=profit_pnl_x, height=profit_pnl_height)
         self.loss_pnl_bar.setOpts(x=loss_pnl_x, height=loss_pnl_height)
 
@@ -362,7 +351,7 @@ class InvestmentTableMonitor(BaseMonitor):
         "money_lock": {"display": "资金占用", "cell": BaseCell, "update": False},
         "profit": {"display": "毛利", "cell": BaseCell, "update": False},
         "cost_fee": {"display": "手续费", "cell": BaseCell, "update": False},
-        "net_profit": {"display": "净利", "cell": BaseCell, "update": False},
+        "net_profit": {"display": "净利", "cell": PnlCell, "update": False},
         "profit_rate": {"display": "净利率", "cell": BaseCell, "update": False},
         "state": {"display": "投资状态", "cell": EnumCell, "update": False},
         "strategy": {"display": "投资策略", "cell": BaseCell, "update": False},

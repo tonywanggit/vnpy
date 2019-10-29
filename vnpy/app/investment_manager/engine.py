@@ -3,7 +3,7 @@
 # @Author  : Tony
 """投资管理核心逻辑"""
 
-from datetime import date
+from datetime import date, timedelta
 from pandas import DataFrame
 
 from vnpy.app.cta_strategy.base import EngineType
@@ -24,16 +24,21 @@ class InvestmentManagerEngine(BaseEngine):
         super().__init__(main_engine, event_engine, APP_NAME)
 
     @staticmethod
-    def load_investment_data(start_time: date, strategy: str, symbol: str):
+    def load_investment_data(start_date: date, end_date: date, strategy: str, symbol: str):
         """加载投资数据"""
-        return investment_database_manager.load_investment(strategy, symbol, EngineType.LIVE.value, start_time,
+        return investment_database_manager.load_investment(strategy, symbol, EngineType.LIVE.value, start_date,
                                                            InvestmentState.FINISHED)
 
     @staticmethod
-    def build_pnl_dataframe(investment_data_list):
+    def build_pnl_dataframe(start_date: date, end_date: date, investment_data_list):
         """构建每日盈亏数据"""
-        pnl_dataframe = DataFrame(sorted(set([investment_data.date for investment_data in investment_data_list])),
-                        columns=["date"])
+        pnl_date = []
+        _date = start_date
+        while _date <= end_date:
+            pnl_date.append(_date)
+            _date += timedelta(1)
+        pnl_dataframe = DataFrame(pnl_date, columns=["date"])
+
         net_pnl = []
         for _, _date in enumerate(pnl_dataframe["date"]):
             net_pnl.append(sum(investment_data.net_profit for investment_data in
@@ -41,3 +46,49 @@ class InvestmentManagerEngine(BaseEngine):
         pnl_dataframe["net_pnl"] = net_pnl
 
         return pnl_dataframe
+
+    @staticmethod
+    def build_statistics_map(investment_data_list):
+        start_num = 0
+        finish_num = 0
+        progressing_num = 0
+        profit_num = 0
+        drawdown_num = 0
+        max_profit = 0
+        max_drawdown = 0
+        total_money_lock = 0
+        total_net_pnl = 0
+        total_commission = 0
+
+        for investment in investment_data_list:
+            start_num += 1
+            total_net_pnl += investment.net_profit
+            total_commission += investment.cost_fee
+
+            if investment.state == InvestmentState.FINISHED:
+                finish_num += 1
+            elif investment.state == InvestmentState.PROGRESSING:
+                progressing_num += 1
+                total_money_lock += investment.money_lock
+
+            if investment.net_profit > 0:
+                profit_num += 1
+                max_profit = max(max_profit, investment.net_profit)
+            elif investment.net_profit < 0:
+                drawdown_num += 1
+                max_drawdown = max(max_drawdown, abs(investment.net_profit))
+
+        statistics = {
+            "start_num": start_num,
+            "finish_num": finish_num,
+            "progressing_num": progressing_num,
+            "profit_num": profit_num,
+            "drawdown_num": drawdown_num,
+            "max_profit": max_profit,
+            "max_drawdown": max_drawdown,
+            "total_money_lock": total_money_lock,
+            "total_net_pnl": total_net_pnl,
+            "total_commission": total_commission
+        }
+
+        return statistics
