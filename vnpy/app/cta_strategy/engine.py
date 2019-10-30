@@ -922,3 +922,12 @@ class CtaEngine(BaseEngine):
             subject = "CTA策略引擎"
 
         self.main_engine.send_email(subject, msg)
+
+    def send_email_subject(self, msg: str, subject: str = None):
+        """
+        Send email to default receiver.
+        """
+        if not subject:
+            subject = "CTA策略引擎"
+
+        self.main_engine.send_email(subject, msg)

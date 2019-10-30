@@ -7,7 +7,8 @@ from datetime import datetime
 
 from vnpy.app.cta_strategy.backtesting import BacktestingEngine
 from vnpy.app.cta_strategy.base import EngineType
-from vnpy.app.investment_manager.template import CtaInvestmentTemplate
+from vnpy.app.investment_manager.template import CtaInvestmentTemplate, EVENT_SEND_EMAIL
+from vnpy.event import Event
 from vnpy.trader.constant import Exchange, Direction, Offset
 from vnpy.trader.database.investment.base import TradeDataExt
 
@@ -39,5 +40,8 @@ if __name__ == '__main__':
     # investment_template.start_investment(trade, 101)
     # investment_template.start_investment(trade, 102)
 
+    engine = BacktestingEngine()
+    investment_template = CtaInvestmentTemplate(engine, "TONY001", "TONY001", {})
+
     trade = build_trade(Offset.CLOSE, 1, 2050)
-    investment_template.finish_investment(trade, 103)
+    investment_template.process_send_email(Event(EVENT_SEND_EMAIL, trade))

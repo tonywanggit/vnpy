@@ -162,7 +162,8 @@ class CtaInvestmentTemplate(CtaTemplate):
 
     def process_send_email(self, event: Event):
         trade_data: TradeDataExt = event.data
-        self.send_email(str(trade_data))
+        subject = f"{trade_data.vt_symbol} - {trade_data.direction.value} - {trade_data.offset.value}"
+        self.cta_engine.send_email_subject(str(trade_data), subject)
 
     @staticmethod
     def get_product_code(symbol: str):
