@@ -291,19 +291,18 @@ class InvestmentSqlManager(InvestmentDatabaseManager):
 
     def load_investment(self, strategy: str, symbol: str, engine_type: str, start_time: datetime,
                         investment_state: InvestmentState) -> Sequence[InvestmentData]:
+        investment_state_str = investment_state.value if investment_state is not None else ""
         s = (
             self.class_investment.select().where(
                 (((self.class_investment.symbol ** f'%{symbol}%') | (self.class_investment.exchange ** f'%{symbol}%')) | (
                         symbol is None or symbol.isspace()))
                 & ((self.class_investment.strategy ** f'%{strategy}%') | (strategy is None or strategy.isspace()))
                 & (self.class_investment.engine_type == engine_type)
-                & ((self.class_investment.state == investment_state.value) | (investment_state is None))
+                & ((self.class_investment.state == investment_state_str) | (investment_state is None))
                 & (self.class_investment.start_datetime > start_time)
             ).order_by(self.class_investment.start_datetime.asc())
         )
-
-        print(s)
-
+        # print(s)
         data = [db_investment.to_investment() for db_investment in s]
         return data
 

@@ -3,6 +3,8 @@
 """
 基于布林通道的双边交易策略
 """
+from datetime import datetime
+
 from vnpy.app.cta_strategy import (
     BarGenerator,
     ArrayManager,
@@ -71,8 +73,6 @@ class BollingerBotRB2001Strategy(CtaInvestmentTemplate):
                  'exitLine',
                  'shortEntryLine',
                  'shortExitLine',
-                 'intraTradeHigh',
-                 'intraTradeLow',
                  'longEntry',
                  'longExit',
                  'shortEntry',
@@ -142,7 +142,8 @@ class BollingerBotRB2001Strategy(CtaInvestmentTemplate):
         self.maFilter = ma_array[-1]
         self.maFilterPrevious = ma_array[-2]
 
-        print(self.entryLine, self.exitLine, self.maFilter, self.maFilterPrevious)
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        print(timestamp, self.entryLine, self.exitLine, self.maFilter, self.maFilterPrevious)
 
         # 计算空头指标数值
         self.shortEntryLine, self.shortExitLine = am.boll_double_down(self.shortBollLength, self.shortEntryDev,

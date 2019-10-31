@@ -81,8 +81,6 @@ class BollingerBotEG2001Strategy(CtaInvestmentTemplate):
                  'shortEntryLine',
                  'shortExitLine',
                  'posPrice',
-                 'intraTradeHigh',
-                 'intraTradeLow',
                  'longEntry',
                  'longExit',
                  'shortEntry',

@@ -26,8 +26,7 @@ class InvestmentManagerEngine(BaseEngine):
     @staticmethod
     def load_investment_data(start_date: date, end_date: date, strategy: str, symbol: str):
         """加载投资数据"""
-        return investment_database_manager.load_investment(strategy, symbol, EngineType.LIVE.value, start_date,
-                                                           InvestmentState.FINISHED)
+        return investment_database_manager.load_investment(strategy, symbol, EngineType.LIVE.value, start_date, None)
 
     @staticmethod
     def build_pnl_dataframe(start_date: date, end_date: date, investment_data_list):
@@ -41,8 +40,8 @@ class InvestmentManagerEngine(BaseEngine):
 
         net_pnl = []
         for _, _date in enumerate(pnl_dataframe["date"]):
-            net_pnl.append(sum(investment_data.net_profit for investment_data in
-                               filter(lambda x: x.date == _date, investment_data_list)))
+            net_pnl.append(sum(investment_data.net_profit if investment_data.net_profit is not None else 0
+                               for investment_data in filter(lambda x: x.date == _date, investment_data_list)))
         pnl_dataframe["net_pnl"] = net_pnl
 
         return pnl_dataframe
@@ -62,7 +61,7 @@ class InvestmentManagerEngine(BaseEngine):
 
         for investment in investment_data_list:
             start_num += 1
-            total_net_pnl += investment.net_profit
+            total_net_pnl += investment.net_profit if investment.net_profit is not None else 0
             total_commission += investment.cost_fee
 
             if investment.state == InvestmentState.FINISHED:
@@ -71,7 +70,9 @@ class InvestmentManagerEngine(BaseEngine):
                 progressing_num += 1
                 total_money_lock += investment.money_lock
 
-            if investment.net_profit > 0:
+            if investment.net_profit is None:
+                pass
+            elif investment.net_profit > 0:
                 profit_num += 1
                 max_profit = max(max_profit, investment.net_profit)
             elif investment.net_profit < 0:

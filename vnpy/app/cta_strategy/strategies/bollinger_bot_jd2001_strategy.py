@@ -72,8 +72,6 @@ class BollingerBotJD2001Strategy(CtaInvestmentTemplate):
                  'exitLine',
                  'shortEntryLine',
                  'shortExitLine',
-                 'intraTradeHigh',
-                 'intraTradeLow',
                  'longEntry',
                  'longExit',
                  'shortEntry',
