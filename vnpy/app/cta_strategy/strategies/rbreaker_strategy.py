@@ -7,11 +7,11 @@ from vnpy.app.cta_strategy import (
     TradeData,
     OrderData,
     BarGenerator,
-    ArrayManager,
-    CtaTemplate)
+    ArrayManager)
+from vnpy.app.investment_manager.template import CtaInvestmentTemplate
 
 
-class RBreakerStrategy(CtaTemplate):
+class RBreakerStrategy(CtaInvestmentTemplate):
     """"""
     author = "KeKe"
 
@@ -61,7 +61,7 @@ class RBreakerStrategy(CtaTemplate):
         Callback when strategy is inited.
         """
         self.write_log("策略初始化")
-        self.load_bar(20)
+        self.load_bar(15)
 
     def on_start(self):
         """
@@ -122,6 +122,7 @@ class RBreakerStrategy(CtaTemplate):
         else:
             self.day_high = max(self.day_high, bar.high_price)
             self.day_low = min(self.day_low, bar.low_price)
+            self.day_close = bar.close_price
 
         if not self.sell_setup:
             return
