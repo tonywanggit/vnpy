@@ -35,6 +35,7 @@ class InvestmentManager(QtWidgets.QWidget):
 
         # 设置UI组件
         self.interval_combo = QtWidgets.QComboBox()
+        self.interval_combo.currentIndexChanged.connect(self.interval_combo_changed)
         for inteval in InvestmentInterval:
             self.interval_combo.addItem(inteval.value)
 
@@ -99,7 +100,6 @@ class InvestmentManager(QtWidgets.QWidget):
 
         self.investment_table = InvestmentTableMonitor(self.main_engine, self.event_engine)
         self.investment_table.setMinimumWidth(1550)
-        # self.log_monitor.setMaximumHeight(900)
 
         self.chart = InvestmentChart()
         self.chart.setMinimumWidth(1200)
@@ -138,6 +138,10 @@ class InvestmentManager(QtWidgets.QWidget):
         timestamp = datetime.now().strftime("%H:%M:%S")
         msg = f"{timestamp}\t{msg}"
         self.investment_table.append(msg)
+
+    def interval_combo_changed(self):
+        interval = InvestmentInterval(self.interval_combo.currentText())
+        print(interval)
 
     def start_analyzing(self):
         """开始分析投资数据"""

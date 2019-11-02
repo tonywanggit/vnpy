@@ -43,5 +43,5 @@ if __name__ == '__main__':
     engine = BacktestingEngine()
     investment_template = CtaInvestmentTemplate(engine, "TONY001", "TONY001", {})
 
-    trade = build_trade(Offset.CLOSE, 1, 2050)
+    trade = build_trade(Offset.CLOSE, 1, 2050.36)
     investment_template.process_send_email(Event(EVENT_SEND_EMAIL, trade))

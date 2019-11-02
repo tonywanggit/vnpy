@@ -162,7 +162,7 @@ class CtaInvestmentTemplate(CtaTemplate):
 
     def process_send_email(self, event: Event):
         trade_data: TradeDataExt = event.data
-        subject = f"{trade_data.vt_symbol} - {trade_data.direction.value} - {trade_data.offset.value}"
+        subject = f"{trade_data.vt_symbol} - {trade_data.direction.value} - {trade_data.offset.value} - {trade_data.price}"
         self.cta_engine.send_email_subject(str(trade_data), subject)
 
     @staticmethod

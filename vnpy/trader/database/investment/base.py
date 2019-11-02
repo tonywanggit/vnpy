@@ -26,12 +26,12 @@ class InvestmentInterval(Enum):
     """
     投资周期
     """
+    NearlyMonth = "近一个月"
+    NearlyWeek = "近一个周"
     CurrentMonth = "当月"
     PreMonth = "上个月"
     Today = "今天"
     Yesterday = "昨天"
-    NearlyMonth = "近一个月"
-    NearlyWeek = "近一个周"
 
 
 @dataclass

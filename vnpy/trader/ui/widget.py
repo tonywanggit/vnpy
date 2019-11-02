@@ -138,7 +138,7 @@ class PnlCell(BaseCell):
 
         if str(content).startswith("-"):
             self.setForeground(COLOR_SHORT)
-        else:
+        elif content is not None:
             self.setForeground(COLOR_LONG)
 
 
