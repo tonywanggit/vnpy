@@ -85,7 +85,7 @@ def get_install_requires():
 
 def get_version_string():
     global version
-    with open("vnpy/__init__.py", "rb") as f:
+    with open("vnpy/init.py", "rb") as f:
         version_line = re.search(
             r"__version__\s+=\s+(.*)", f.read().decode("utf-8")
         ).group(1)
