@@ -34,7 +34,7 @@ class InvestmentDatabaseManager(ABC):
 
     @abstractmethod
     def load_investment(self, strategy: str, symbol: str, engine_type: str, start_time: datetime,
-                        investment_state: "InvestmentState") -> Sequence["InvestmentData"]:
+                        end_time: datetime, investment_state: "InvestmentState") -> Sequence["InvestmentData"]:
         pass
 
     @abstractmethod

@@ -26,7 +26,8 @@ class InvestmentManagerEngine(BaseEngine):
     @staticmethod
     def load_investment_data(start_date: date, end_date: date, strategy: str, symbol: str):
         """加载投资数据"""
-        return investment_database_manager.load_investment(strategy, symbol, EngineType.LIVE.value, start_date, None)
+        return investment_database_manager.load_investment(strategy, symbol, EngineType.LIVE.value, start_date,
+                                                           end_date, None)
 
     @staticmethod
     def build_pnl_dataframe(start_date: date, end_date: date, investment_data_list):

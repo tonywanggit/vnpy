@@ -35,7 +35,6 @@ class InvestmentManager(QtWidgets.QWidget):
 
         # 设置UI组件
         self.interval_combo = QtWidgets.QComboBox()
-        self.interval_combo.currentIndexChanged.connect(self.interval_combo_changed)
         for inteval in InvestmentInterval:
             self.interval_combo.addItem(inteval.value)
 
@@ -52,6 +51,8 @@ class InvestmentManager(QtWidgets.QWidget):
         self.end_date_edit = QtWidgets.QDateEdit(
             QtCore.QDate.currentDate()
         )
+
+        self.interval_combo.currentIndexChanged.connect(self.interval_combo_changed)
 
         self.capital_line = QtWidgets.QLineEdit("30000")
         self.strategy_edit = QtWidgets.QLineEdit("")
@@ -141,14 +142,32 @@ class InvestmentManager(QtWidgets.QWidget):
 
     def interval_combo_changed(self):
         interval = InvestmentInterval(self.interval_combo.currentText())
-        print(interval)
+        today = QtCore.QDate.currentDate()
+        yesterday = today.addDays(-1)
+        current_month_first_day = QtCore.QDate(today.year(), today.month(), 1)
+        last_month_day = today.addMonths(-1)
+        last_month_first_day = QtCore.QDate(last_month_day.year(), last_month_day.month(), 1)
+        last_month_last_day = current_month_first_day.addDays(-1)
+
+        interval_date = {
+            InvestmentInterval.NearlyMonth: (today.addMonths(-1), today),
+            InvestmentInterval.NearlyWeek: (today.addDays(-7), today),
+            InvestmentInterval.CurrentMonth: (current_month_first_day, today),
+            InvestmentInterval.PreMonth: (last_month_first_day, last_month_last_day),
+            InvestmentInterval.Today: (today, today),
+            InvestmentInterval.Yesterday: (yesterday, yesterday)
+        }
+
+        start_date, end_date = interval_date.get(interval)
+        self.start_date_edit.setDate(start_date)
+        self.end_date_edit.setDate(end_date)
 
     def start_analyzing(self):
         """开始分析投资数据"""
 
         start_date = self.start_date_edit.date().toPyDate()
         end_date = self.end_date_edit.date().toPyDate()
-        if end_date <= start_date:
+        if end_date < start_date:
             QtWidgets.QMessageBox.information(self, "友情提示", "结束日期必须大于开始日期！")
 
         investment_data = self.investment_engine.load_investment_data(start_date, end_date,

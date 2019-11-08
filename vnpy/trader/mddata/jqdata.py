@@ -147,7 +147,7 @@ class JqdataClient(MdDataApi):
                     low_price=row["low"],
                     close_price=row["close"],
                     volume=row["volume"],
-                    gateway_name="RQ"
+                    gateway_name="JQ"
                 )
                 data.append(bar)
 
