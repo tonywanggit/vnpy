@@ -293,11 +293,11 @@ class InvestmentSqlManager(InvestmentDatabaseManager):
                         end_time: datetime, investment_state: InvestmentState) -> Sequence[InvestmentData]:
         investment_state_str = investment_state.value if investment_state is not None else ""
 
-        end_time = datetime(end_time.year, end_time.month, end_time.day, hour=23, minute=59, second=59, microsecond=59);
+        end_time = datetime(end_time.year, end_time.month, end_time.day, hour=23, minute=59, second=59, microsecond=59)
         s = (
             self.class_investment.select().where(
-                (((self.class_investment.symbol ** f'%{symbol}%') | (self.class_investment.exchange ** f'%{symbol}%')) | (
-                        symbol is None or symbol.isspace()))
+                (((self.class_investment.symbol ** f'%{symbol}%') | (
+                            self.class_investment.exchange ** f'%{symbol}%')) | (symbol is None or symbol.isspace()))
                 & ((self.class_investment.strategy ** f'%{strategy}%') | (strategy is None or strategy.isspace()))
                 & (self.class_investment.engine_type == engine_type)
                 & ((self.class_investment.state == investment_state_str) | (investment_state is None))
