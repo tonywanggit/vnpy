@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QHeaderView
 from datetime import datetime, timedelta
 
 from vnpy.event import Event, EventEngine
-from vnpy.trader.database.investment.base import InvestmentInterval
+from vnpy.trader.database.investment.base import InvestmentInterval, InvestmentState
 from vnpy.trader.engine import MainEngine
 from vnpy.trader.ui import QtCore, QtWidgets
 from vnpy.trader.ui.widget import BaseMonitor, BaseCell, EnumCell, DirectionCell, DateTimeCell, PnlCell
@@ -54,6 +54,12 @@ class InvestmentManager(QtWidgets.QWidget):
 
         self.interval_combo.currentIndexChanged.connect(self.interval_combo_changed)
 
+
+        self.investment_state_combo = QtWidgets.QComboBox()
+        self.investment_state_combo.addItem("")
+        for invest_state in InvestmentState:
+            self.investment_state_combo.addItem(invest_state.value)
+
         self.capital_line = QtWidgets.QLineEdit("30000")
         self.strategy_edit = QtWidgets.QLineEdit("")
         self.symbol_edit = QtWidgets.QLineEdit("")
@@ -82,7 +88,7 @@ class InvestmentManager(QtWidgets.QWidget):
         form.addRow("投资周期", self.interval_combo)
         form.addRow("投资策略", self.strategy_edit)
         form.addRow("投资品种", self.symbol_edit)
-        form.addRow("投资金额", self.capital_line)
+        form.addRow("投资状态", self.investment_state_combo)
         form.addRow("开始日期", self.start_date_edit)
         form.addRow("结束日期", self.end_date_edit)
 
@@ -172,7 +178,8 @@ class InvestmentManager(QtWidgets.QWidget):
 
         investment_data = self.investment_engine.load_investment_data(start_date, end_date,
                                                                       self.strategy_edit.text(),
-                                                                      self.symbol_edit.text())
+                                                                      self.symbol_edit.text(),
+                                                                      self.investment_state_combo.currentText())
         self.investment_table.update_data(investment_data)
 
         dataframe = self.investment_engine.build_pnl_dataframe(start_date, end_date, investment_data)

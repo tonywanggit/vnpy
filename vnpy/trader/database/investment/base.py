@@ -13,8 +13,8 @@ from vnpy.trader.object import TradeData
 
 
 class InvestmentState(Enum):
-    PROGRESSING = "PROGRESSING"
-    FINISHED = "FINISHED"
+    PROGRESSING = "进行中"
+    FINISHED = "已完成"
 
 
 class CommissionUnit(Enum):

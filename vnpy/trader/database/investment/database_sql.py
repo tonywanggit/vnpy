@@ -290,8 +290,8 @@ class InvestmentSqlManager(InvestmentDatabaseManager):
         return s[0].to_investment() if s is not None and len(s) > 0 else None
 
     def load_investment(self, strategy: str, symbol: str, engine_type: str, start_time: datetime,
-                        end_time: datetime, investment_state: InvestmentState) -> Sequence[InvestmentData]:
-        investment_state_str = investment_state.value if investment_state is not None else ""
+                        end_time: datetime, investment_state: str) -> Sequence[InvestmentData]:
+        investment_state_str = investment_state if investment_state != "" else None
 
         end_time = datetime(end_time.year, end_time.month, end_time.day, hour=23, minute=59, second=59, microsecond=59)
         s = (
@@ -300,7 +300,7 @@ class InvestmentSqlManager(InvestmentDatabaseManager):
                             self.class_investment.exchange ** f'%{symbol}%')) | (symbol is None or symbol.isspace()))
                 & ((self.class_investment.strategy ** f'%{strategy}%') | (strategy is None or strategy.isspace()))
                 & (self.class_investment.engine_type == engine_type)
-                & ((self.class_investment.state == investment_state_str) | (investment_state is None))
+                & ((self.class_investment.state == investment_state_str) | (investment_state_str is None))
                 & (self.class_investment.start_datetime >= start_time)
                 & (self.class_investment.start_datetime <= end_time)
             ).order_by(self.class_investment.start_datetime.asc())
