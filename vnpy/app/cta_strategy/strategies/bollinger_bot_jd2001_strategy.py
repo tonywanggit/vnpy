@@ -22,10 +22,10 @@ class BollingerBotJD2001Strategy(CtaInvestmentTemplate):
     fixedSize = 2  # 每次交易的数量
 
     # （多头参数）
-    bollLength = 60  # 通道窗口数
+    bollLength = 52  # 通道窗口数
     entryDev = 3.2  # 开仓偏差
     exitDev = 1.2  # 平仓偏差
-    trailingPrcnt = 1.4  # 移动止损百分比
+    trailingPrcnt = 1.0  # 移动止损百分比
     maLength = 11  # 过滤用均线窗口
 
     # （空头参数）
