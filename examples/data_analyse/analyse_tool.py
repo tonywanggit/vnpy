@@ -119,18 +119,9 @@ class DataAnalysis:
 
     def base_analysis(self, df: DataFrame = None):
         """"""
+        df, close_price = self.plot_close_price(df)
         if df is None:
-            df = self.orignal
-
-        if df is None:
-            output("数据为空，请输入数据")
-
-        close_price = df["close"]
-
-        output("第一步:画出行情图，检查数据断点")
-
-        close_price.plot(figsize=(20, 8), title="close_price")
-        plt.show()
+            return
 
         random_test(close_price)
         stability_test(close_price)
@@ -142,6 +133,22 @@ class DataAnalysis:
         self.calculate_index(df)
 
         return df
+
+    def plot_close_price(self, df: DataFrame = None):
+        if df is None:
+            df = self.orignal
+
+        if df is None:
+            output("数据为空，请输入数据")
+            return None, None
+
+        close_price = df["close"]
+
+        output("第一步:画出行情图，检查数据断点")
+        close_price.plot(figsize=(20, 8), title="close_price")
+        plt.show()
+
+        return df, close_price
 
     def relative_volatility_analysis(self, df: DataFrame = None):
         """
