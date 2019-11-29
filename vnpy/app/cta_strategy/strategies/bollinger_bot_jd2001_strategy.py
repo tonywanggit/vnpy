@@ -75,7 +75,9 @@ class BollingerBotJD2001Strategy(CtaInvestmentTemplate):
                  'longEntry',
                  'longExit',
                  'shortEntry',
-                 'shortExit']
+                 'shortExit',
+                 'intraTradeHigh',
+                 'intraTradeLow']
 
     # ----------------------------------------------------------------------
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
