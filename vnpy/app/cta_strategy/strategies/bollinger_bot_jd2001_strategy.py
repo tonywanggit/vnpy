@@ -18,22 +18,22 @@ class BollingerBotJD2001Strategy(CtaInvestmentTemplate):
     author = u'tonywang_efun'
 
     # 策略参数
-    initDays = 20  # 初始化数据所用的天数
+    initDays = 10  # 初始化数据所用的天数
     fixedSize = 2  # 每次交易的数量
 
     # （多头参数）
-    bollLength = 52  # 通道窗口数
-    entryDev = 3.0  # 开仓偏差 3.1
-    exitDev = 1.2  # 平仓偏差 1.4
-    trailingPrcnt = 1.0  # 移动止损百分比 1.5
-    maLength = 13  # 过滤用均线窗口
+    bollLength = 50  # 通道窗口数
+    entryDev = 2.2  # 开仓偏差 3.1
+    exitDev = 0.9  # 平仓偏差 1.4
+    trailingPrcnt = 1.4  # 移动止损百分比 1.5
+    maLength = 37  # 过滤用均线窗口
 
     # （空头参数）
-    shortBollLength = 36  # 通道窗口数
-    shortEntryDev = 3.4  # 开仓偏差
-    shortExitDev = 3.2  # 平仓偏差
-    shortTrailingPrcnt = 1.7  # 移动止损百分比
-    shortMaLength = 40  # 过滤用均线窗口
+    shortBollLength = 38  # 通道窗口数
+    shortEntryDev = 3.3  # 开仓偏差
+    shortExitDev = 1.4  # 平仓偏差
+    shortTrailingPrcnt = 2.4  # 移动止损百分比
+    shortMaLength = 37  # 过滤用均线窗口
 
     # 策略变量(多头)
     entryLine = 0  # 开仓上轨
