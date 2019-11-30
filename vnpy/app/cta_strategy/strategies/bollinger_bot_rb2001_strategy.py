@@ -145,7 +145,7 @@ class BollingerBotRB2001Strategy(CtaInvestmentTemplate):
         self.maFilterPrevious = ma_array[-2]
 
         timestamp = datetime.now().strftime("%H:%M:%S")
-        print(timestamp, self.entryLine, self.exitLine, self.maFilter, self.maFilterPrevious)
+        # print(timestamp, self.entryLine, self.exitLine, self.maFilter, self.maFilterPrevious)
 
         # 计算空头指标数值
         self.shortEntryLine, self.shortExitLine = am.boll_double_down(self.shortBollLength, self.shortEntryDev,
