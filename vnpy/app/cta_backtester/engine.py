@@ -2,6 +2,7 @@ import os
 import importlib
 import traceback
 from datetime import datetime
+from rqdatac.share.errors import QuotaExceeded
 from threading import Thread
 from pathlib import Path
 
@@ -64,10 +65,13 @@ class BacktesterEngine(BaseEngine):
         """
         Init RQData client.
         """
-        result = mddata_client.init()
-        md_data_api = SETTINGS["mddata.api"]
-        if result:
-            self.write_log(f"{md_data_api}数据接口初始化成功")
+        try:
+            result = mddata_client.init()
+            md_data_api = SETTINGS["mddata.api"]
+            if result:
+                self.write_log(f"{md_data_api}数据接口初始化成功")
+        except QuotaExceeded as e:
+            self.write_log(f"{md_data_api}初始化异常{e.args}")
 
     def write_log(self, msg: str):
         """"""
