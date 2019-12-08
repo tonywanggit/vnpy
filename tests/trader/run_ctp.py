@@ -1,3 +1,4 @@
+from gateway.bitmex import BitmexGateway
 from vnpy.app.cta_backtester import CtaBacktesterApp
 from vnpy.app.cta_strategy import CtaStrategyApp
 from vnpy.app.investment_manager import InvestmentManagerApp
@@ -19,7 +20,7 @@ def main():
     event_engine = EventEngine()
 
     main_engine = MainEngine(event_engine)
-    # main_engine.add_gateway(CtptestGateway)
+    main_engine.add_gateway(BitmexGateway)
     main_engine.add_gateway(CtpGateway)
 
     main_engine.add_app(CtaStrategyApp)
