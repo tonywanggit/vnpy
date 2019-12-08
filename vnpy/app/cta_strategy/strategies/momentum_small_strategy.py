@@ -10,7 +10,7 @@ from vnpy.app.cta_strategy import (
 )
 
 
-class MomentumHunterStrategy(CtaTemplate):
+class MomentumSmallStrategy(CtaTemplate):
     """"""
     author = "KEKE"
 
@@ -51,10 +51,10 @@ class MomentumHunterStrategy(CtaTemplate):
         """"""
         super().__init__(cta_engine, strategy_name, vt_symbol, setting)
 
-        self.bg = BarGenerator(self.on_bar, 30, self.on_30min_bar)
+        self.bg = BarGenerator(self.on_bar, 15, self.on_30min_bar)
         self.am = ArrayManager()
 
-        self.bg2 = BarGenerator(self.on_bar, 60, self.on_60min_bar)
+        self.bg2 = BarGenerator(self.on_bar, 30, self.on_60min_bar)
         self.am2 = ArrayManager()
 
     def on_init(self):

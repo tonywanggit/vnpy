@@ -115,6 +115,7 @@ class BacktestingEngine:
         self.pricetick = 0
         self.capital = 1_000_000
         self.mode = BacktestingMode.BAR
+        self.inverse = False
 
         self.strategy_class = None
         self.strategy = None
@@ -193,14 +194,10 @@ class BacktestingEngine:
         self.symbol, exchange_str = self.vt_symbol.split(".")
         self.exchange = Exchange(exchange_str)
 
-        if capital:
-            self.capital = capital
-
-        if end:
-            self.end = end
-
-        if mode:
-            self.mode = mode
+        self.capital = capital
+        self.end = end
+        self.mode = mode
+        self.inverse = inverse
 
     def add_strategy(self, strategy_class: type, setting: dict):
         """"""
@@ -257,8 +254,8 @@ class BacktestingEngine:
             progress_bar = "#" * int(progress * 10)
             self.output(f"加载进度：{progress_bar} [{progress:.0%}]")
 
-            start = end
-            end += progress_delta
+            start = end + interval_delta
+            end += (progress_delta + interval_delta)
 
         self.output(f"历史数据加载完成，数据量：{len(self.history_data)}")
 
@@ -317,7 +314,12 @@ class BacktestingEngine:
 
         for daily_result in self.daily_results.values():
             daily_result.calculate_pnl(
-                pre_close, start_pos, self.size, self.rate, self.slippage
+                pre_close,
+                start_pos,
+                self.size,
+                self.rate,
+                self.slippage,
+                self.inverse
             )
 
             pre_close = daily_result.close_price
@@ -354,6 +356,7 @@ class BacktestingEngine:
             end_balance = 0
             max_drawdown = 0
             max_ddpercent = 0
+            max_drawdown_duration = 0
             total_net_pnl = 0
             daily_net_pnl = 0
             total_commission = 0
@@ -392,6 +395,9 @@ class BacktestingEngine:
             end_balance = df["balance"].iloc[-1]
             max_drawdown = df["drawdown"].min()
             max_ddpercent = df["ddpercent"].min()
+            max_drawdown_end = df["drawdown"].idxmin()
+            max_drawdown_start = df["balance"][:max_drawdown_end].argmax()
+            max_drawdown_duration = (max_drawdown_end - max_drawdown_start).days
 
             total_net_pnl = df["net_pnl"].sum()
             daily_net_pnl = total_net_pnl / total_days
@@ -437,6 +443,7 @@ class BacktestingEngine:
             self.output(f"年化收益：\t{annual_return:,.2f}%")
             self.output(f"最大回撤: \t{max_drawdown:,.2f}")
             self.output(f"百分比最大回撤: {max_ddpercent:,.2f}%")
+            self.output(f"最长回撤天数: \t{max_drawdown_duration}")
 
             self.output(f"总盈亏：\t{total_net_pnl:,.2f}")
             self.output(f"总手续费：\t{total_commission:,.2f}")
@@ -465,6 +472,7 @@ class BacktestingEngine:
             "end_balance": end_balance,
             "max_drawdown": max_drawdown,
             "max_ddpercent": max_ddpercent,
+            "max_drawdown_duration": max_drawdown_duration,
             "total_net_pnl": total_net_pnl,
             "daily_net_pnl": daily_net_pnl,
             "total_commission": total_commission,
@@ -547,7 +555,8 @@ class BacktestingEngine:
                 self.pricetick,
                 self.capital,
                 self.end,
-                self.mode
+                self.mode,
+                self.inverse
             )))
             results.append(result)
 
@@ -607,6 +616,7 @@ class BacktestingEngine:
         global ga_capital
         global ga_end
         global ga_mode
+        global ga_inverse
 
         ga_target_name = target_name
         ga_strategy_class = self.strategy_class
@@ -621,6 +631,7 @@ class BacktestingEngine:
         ga_capital = self.capital
         ga_end = self.end
         ga_mode = self.mode
+        ga_inverse = self.inverse
 
         # Set up genetic algorithem
         toolbox = base.Toolbox()
@@ -871,7 +882,7 @@ class BacktestingEngine:
             self.trades[trade.vt_tradeid] = trade
 
             # Update stop order.
-            stop_order.vt_orderid = order.vt_orderid
+            stop_order.vt_orderids.append(order.vt_orderid)
             stop_order.status = StopOrderStatus.TRIGGERED
 
             self.active_stop_orders.pop(stop_order.stop_orderid)
@@ -1212,7 +1223,8 @@ def _ga_optimize(parameter_values: tuple):
         ga_pricetick,
         ga_capital,
         ga_end,
-        ga_mode
+        ga_mode,
+        ga_inverse
     )
     return (result[1],)
 
