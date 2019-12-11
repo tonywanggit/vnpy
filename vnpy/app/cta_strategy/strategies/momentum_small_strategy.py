@@ -14,16 +14,16 @@ class MomentumSmallStrategy(CtaTemplate):
     """"""
     author = "KEKE"
 
-    aroon_window = 39
-    atr_window = 24
+    aroon_window = 11
+    atr_window = 28
     atr_ma_window = 12
-    donchian_window = 42
-    rsi_window = 28
-    rsi_buy = 64
+    donchian_window = 46
+    rsi_window = 31
+    rsi_buy = 68
     rsi_sell = 36
     dis_open = 46
-    dis_salir = 13
-    ultosc_buy = 66
+    dis_salir = 1
+    ultosc_buy = 68
     ultosc_sell = 36
     fixed_size = 10
 
