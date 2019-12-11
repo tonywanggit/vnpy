@@ -75,7 +75,6 @@ class CincoJD2001Strategy(CtaTemplate):
         Callback when strategy is inited.
         """
         self.write_log("策略初始化")
-
         self.load_bar(10)
     
     def on_start(self):
@@ -107,7 +106,7 @@ class CincoJD2001Strategy(CtaTemplate):
         self.cancel_all()
 
         self.am.update_bar(bar)
-        if not self.inited:
+        if not self.am.inited:
             return
 
         self.boll_up, self.boll_down = self.am.boll(self.boll_window, self.boll_dev)
@@ -119,6 +118,8 @@ class CincoJD2001Strategy(CtaTemplate):
             self.intra_trade_low = bar.low_price
             self.long_stop = 0
             self.short_stop = 0
+
+            # print(self.boll_up, self.boll_down, self.intra_trade_high, self.intra_trade_low)
 
             if self.rsi_value >= self.rsi_long:
                 self.buy(self.boll_up, self.fixed_size, stop=True)
