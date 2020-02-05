@@ -1,56 +1,66 @@
-# encoding: UTF-8
-
-"""
-MACD交易策略
-"""
 from vnpy.app.cta_strategy import (
+    CtaTemplate,
     BarGenerator,
     ArrayManager,
+    TickData,
     BarData,
-    TickData
+    OrderData,
+    TradeData,
+    StopOrder
 )
-from vnpy.app.investment_manager.template import CtaInvestmentTemplate
 
+from .strategy_utility import AdvanceArrayManager
 
-class MacdAP001Strategy(CtaInvestmentTemplate):
+class BollingerLongXStrategy(CtaTemplate):
     """基于布林通道的交易策略"""
     author = u'tonywang_efun'
 
     # 策略参数
-    initDays = 15  # 初始化数据所用的天数
-    fixedSize = 1  # 每次交易的数量
-    fixWinPrcnt = 5  # 固定止盈百分比
-    shortfixWinPrcnt = 5  # 固定止盈百分比
+    bar_window = 13
+    fixedSize = 2  # 每次交易的数量
 
-    # 公共策略变量
-    posPrice = 0  # 持仓价
-    macd = 0
-    signal = 0
-    hist = 0
-    red_bar_num = 0
-    green_bar_num = 0
+    # （多头参数）
+    bollLength = 60  # 通道窗口数
+    entryDev = 3.2  # 开仓偏差
+    exitDev = 1.0  # 平仓偏差
+    trailingPrcnt = 0.6  # 移动止损百分比
+    maLength = 14  # 过滤用均线窗口
+
+    # 策略变量(多头)
+    entryLine = 0  # 开仓上轨
+    exitLine = 0  # 平仓上轨
+    maFilter = 0  # 均线过滤
+    maFilterPrevious = 0  # 上一期均线
+    intraTradeHigh = 0  # 持仓期内的最高点
+    longEntry = 0  # 多头开仓
+    longExit = 0  # 多头平仓
 
     # 参数列表，保存了参数的名称
-    parameters = ['initDays',
-                  'fixedSize',
-                  'fixWinPrcnt',
-                  'shortfixWinPrcnt']
+    parameters = ['fixedSize',
+                  'bar_window',
+                  'bollLength',
+                  'entryDev',
+                  'exitDev',
+                  'trailingPrcnt',
+                  'maLength']
 
     # 变量列表，保存了变量的名称
-    variables = ['posPrice',
-                 'macd',
-                 'signal',
-                 'hist']
+    variables = ['entryLine',
+                 'exitLine',
+                 'longEntry',
+                 'longExit',
+                 'intraTradeHigh',
+                 'intraTradeLow']
 
     # ----------------------------------------------------------------------
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
         """"""
-        super(MacdAP001Strategy, self).__init__(
+        super().__init__(
             cta_engine, strategy_name, vt_symbol, setting
         )
 
-        self.bg = BarGenerator(self.on_bar, 1, self.on_xmin_bar)
-        self.am = ArrayManager(50)
+        self.bg = BarGenerator(self.on_bar, self.bar_window, self.on_xmin_bar)
+        self.am = AdvanceArrayManager()
 
     # ----------------------------------------------------------------------
     def on_init(self):
@@ -58,7 +68,7 @@ class MacdAP001Strategy(CtaInvestmentTemplate):
         Callback when strategy is inited.
         """
         self.write_log("策略初始化")
-        self.load_bar(self.initDays)
+        self.load_bar(10)
 
     # ----------------------------------------------------------------------
     def on_start(self):
@@ -101,48 +111,27 @@ class MacdAP001Strategy(CtaInvestmentTemplate):
             return
 
         # 计算多头指标数值
-        self.macd, self.signal, self.hist = am.macd(12, 26, 9)
-
-        if self.hist > 0:
-            self.red_bar_num += 1
-            self.green_bar_num = 0
-        elif self.hist < 0:
-            self.red_bar_num = 0
-            self.green_bar_num += 1
-
-        if self.red_bar_num == 1:
-            print(bar.datetime, self.macd, self.signal, self.hist)
+        self.entryLine, self.exitLine = am.boll_double_up(self.bollLength, self.entryDev, self.exitDev)
+        ma_array = am.sma(self.maLength, True)
+        self.maFilter = ma_array[-1]
+        self.maFilterPrevious = ma_array[-2]
 
         # 当前无仓位，发送OCO开仓委托
         if self.pos == 0:
             self.intraTradeHigh = bar.high_price
             self.intraTradeLow = bar.low_price
 
-            if self.hist > 0:
-                self.buy(bar.close_price, self.fixedSize)
-
-            elif self.hist < 0:
-                self.short(bar.close_price, self.fixedSize)
+            if bar.close_price > self.maFilter > self.maFilterPrevious:
+                self.longEntry = self.entryLine
+                self.buy(self.longEntry, self.fixedSize, True)
 
         # 持有多头仓位
         elif self.pos > 0:
-            if 0 < self.posPrice < bar.close_price \
-                    and (bar.close_price - self.posPrice) / self.posPrice > (self.fixWinPrcnt / 100):
-                self.sell(bar.close_price * 0.99, abs(self.pos))
-            elif self.hist < 0:
-                self.sell(bar.close_price * 0.99, abs(self.pos))
-            else:
-                self.intraTradeHigh = max(self.intraTradeHigh, bar.high_price)
+            self.intraTradeHigh = max(self.intraTradeHigh, bar.high_price)
+            self.longExit = self.intraTradeHigh * (1 - self.trailingPrcnt / 100)
+            self.longExit = min(self.longExit, self.exitLine)
 
-        # 持有空头仓位
-        elif self.pos < 0:
-            if bar.close_price < self.posPrice \
-                    and (self.posPrice - bar.close_price) / self.posPrice > (self.shortfixWinPrcnt / 100):
-                self.cover(bar.close_price * 1.01, abs(self.pos))
-            elif self.hist > 0:
-                self.cover(bar.close_price * 1.01, abs(self.pos))
-            else:
-                self.intraTradeLow = min(self.intraTradeLow, bar.low_price)
+            self.sell(self.longExit, abs(self.pos), True)
 
         # 发出状态更新事件
         self.put_event()
@@ -153,11 +142,6 @@ class MacdAP001Strategy(CtaInvestmentTemplate):
 
     # ----------------------------------------------------------------------
     def on_trade(self, trade):
-
-        # 记录交易数据并分析投资情况
-        self.record_trade(trade, "MACD", True)
-
-        self.posPrice = trade.price
         self.put_event()
 
     # ----------------------------------------------------------------------
